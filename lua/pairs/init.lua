@@ -227,6 +227,7 @@ end
 -- @param left string: left bracket
 -- @return string: clean line
 local function clean(line, left)
+  line = line:gsub('\\\\', '')
   line = line:gsub('\\' .. escape(left), '')
   local right = Pairs:get_right(left)
   if right ~= left then
@@ -275,6 +276,7 @@ end
 -- @param left string: left bracket
 -- @return boolean
 function Pairs:get_ignore_pre(left_line, left)
+  left_line = left_line:gsub('\\\\', '')
   local opts = self:get_opts(left)
   local ignore_pre = opts.ignore_pre
   local pattern = ignore_pre:gsub('\\', '\\\\') .. '$'
