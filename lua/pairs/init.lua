@@ -10,9 +10,9 @@ local Pairs = {
       {'"', '"'},
     },
     lua = {
-      {'(', ')', {ignore_pre = '[%\\]', ignore = {'%(', '%)'}}},
-      {'[', ']', {ignore_pre = '[%\\]', ignore = {'%[', '%]'}}},
-      {'{', '}', {ignore_pre = '[%\\]', ignore = {'%{', '%}'}}},
+      {'(', ')', {ignore_pre = '[%\\]', ignore = {'%(', '%)', '\\(', '\\)'}}},
+      {'[', ']', {ignore_pre = '[%\\]', ignore = {'%[', '%]', '\\[', '\\]'}}},
+      {'{', '}', {ignore_pre = '[%\\]', ignore = {'%{', '%}', '\\{', '\\}'}}},
     },
     python = {
       {"'", "'", {triplet = true}},
@@ -99,6 +99,10 @@ function Pairs:setup(opts)
 
       if not pair.opts.ignore_pre then
         pair.opts.ignore_pre = '\\'
+      end
+
+      if not pair.opts.ignore then
+        pair.opts.ignore = {'\\' .. pair.left, '\\' .. pair.right}
       end
 
       if not pair.opts.triplet then

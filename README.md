@@ -36,9 +36,9 @@ local default_opts = {
       {'"', '"'},
     },
     lua = {
-      {'(', ')', {ignore_pre = '[%\\]', ignore = {'%(', '%)'}}},
-      {'[', ']', {ignore_pre = '[%\\]', ignore = {'%[', '%]'}}},
-      {'{', '}', {ignore_pre = '[%\\]', ignore = {'%{', '%}'}}},
+      {'(', ')', {ignore_pre = '[%\\]', ignore = {'%(', '%)', '\\(', '\\)'}}},
+      {'[', ']', {ignore_pre = '[%\\]', ignore = {'%[', '%]', '\\[', '\\]'}}},
+      {'{', '}', {ignore_pre = '[%\\]', ignore = {'%{', '%}', '\\{', '\\}'}}},
     },
     python = {
       {"'", "'", {triplet = true}},
@@ -61,7 +61,7 @@ A `pair` is specified by
 { left, right, opts (optional) }
 opts = {
   ignore_pre = vim regex pattern, right bracket will never be completed when left bracket is typeset after the pattern, default '\\'
-  ignore     = lua pattern, when checking the validity of brackets, these patterns will be ignored
+  ignore     = lua patterns, when checking the validity of brackets, these patterns will be ignored, default escaped pairs
   triplet    = boolean, only for balanced brackets, expand the triplet brackets, default true
   cross_line = boolean, whether the bracket can cross lines, this option only has effect on enter action
 }
