@@ -8,12 +8,12 @@ One line to setup the plugin with `packer.nvim`
 use {'ZhiyuanLck/smart-pairs', event="InsertEnter", config=function() require('pairs'):setup() end}
 ```
 
-*Note*: this plugin is still in develop, so the most behaviors are set by default. You can request the feature of
+***Note***: this plugin is still in develop, so most behaviors are set by default. You can request the feature of
 options that can control the default behaviors.
 
-*Note*: only support bracket of single char.
+***Note***: only support bracket of single char.
 
-*Note*: lines in the examples below represent for the *whole line* not the part of line.
+***Note***: lines in the examples below represent for the *whole line* not the part of line.
 
 ## Configuration
 
