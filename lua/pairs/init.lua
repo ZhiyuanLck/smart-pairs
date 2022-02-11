@@ -564,11 +564,15 @@ function Pairs:del_empty_lines()
     return true
   end
 
+  local line1 = vim.api.nvim_buf_get_lines(0, above_nr, above_nr + 1, true)[1]:match('^(.-)%s*$')
+
   -- empty lines in the end of file
   if below_nr == end_nr then
     if below_nr - above_nr > 2 then
       vim.cmd(fmt('silent %d,%dd', above_nr + 2, end_nr))
-      vim.api.nvim_win_set_cursor(0, {above_nr + 1, 1})
+      vim.api.nvim_buf_set_lines(0, above_nr, above_nr + 1, true, {line1})
+      -- cannot set col to 1, which will cause indent problem
+      vim.api.nvim_win_set_cursor(0, {above_nr + 1, vim.fn.strwidth(line1)})
       feedkeys('<esc>o')
     else
       feedkeys('<bs>')
@@ -576,7 +580,6 @@ function Pairs:del_empty_lines()
     return true
   end
 
-  local line1 = vim.api.nvim_buf_get_lines(0, above_nr, above_nr + 1, true)[1]:match('^(.-)%s*$')
   local line2 = vim.api.nvim_buf_get_lines(0, below_nr, below_nr + 1, true)[1]:match('^%s*(.-)$')
   -- delete all blanks and merge lines
   if left and right then
@@ -589,7 +592,8 @@ function Pairs:del_empty_lines()
   else -- leave an empty line
     vim.cmd(fmt('silent %d,%dd', above_nr + 2, below_nr))
     vim.api.nvim_buf_set_lines(0, above_nr, above_nr + 1, true, {line1})
-    vim.api.nvim_win_set_cursor(0, {above_nr + 1, 1})
+    -- cannot set col to 1, which will cause indent problem
+    vim.api.nvim_win_set_cursor(0, {above_nr + 1, vim.fn.strlen(line1)})
     feedkeys('<esc>o')
   end
   return true
