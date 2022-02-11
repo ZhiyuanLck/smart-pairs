@@ -44,6 +44,8 @@ local Pairs = {
       }
     }
   },
+  enable_space = true,
+  enable_enter = true,
   cache = {}
 }
 
@@ -104,11 +106,15 @@ function Pairs:set_keymap()
     map(l, fmt([[<cmd>lua require('pairs'):type_left("%s")<cr>]], l:gsub('"', '\\"')))
     map(r, fmt([[<cmd>lua require('pairs'):type_right("%s")<cr>]], r:gsub('"', '\\"')))
   end
-  map('<space>', [[<cmd>lua require('pairs'):type_space()<cr>]])
   if self.delete.enable then
     map('<bs>', [[<cmd>lua require('pairs'):type_del()<cr>]])
   end
-  map('<cr>', [[<cmd>lua require('pairs'):type_enter()<cr>]])
+  if self.enable_space then
+    map('<space>', [[<cmd>lua require('pairs'):type_space()<cr>]])
+  end
+  if self.enable_enter then
+    map('<cr>', [[<cmd>lua require('pairs'):type_enter()<cr>]])
+  end
   self:set_buf_keymap()
 end
 

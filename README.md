@@ -74,6 +74,8 @@ local default_opts = {
       }
     }
   },
+  enable_space = true,
+  enable_enter = true,
 }
 ```
 
@@ -113,7 +115,14 @@ opts = {
   },
 ```
 
-**`delete.enable`**: enable smart deletion.
+**`enable_space`**: enable smart space, if set to `false`, `<space>` will not be mapped, default
+`true`.
+
+**`enable_enter`**: enable smart enter, if set to `false`, `<cr>` will not be mapped, default
+`true`.
+
+**`delete.enable`**: enable smart deletion, if set to `false`, `<bs>` will not be mapped, default
+`true`.
 
 **`delete.empty_line.enable`**: enable `<bs>` to delete empty lines smartly, default `true`.
 
