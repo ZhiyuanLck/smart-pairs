@@ -55,7 +55,7 @@ local default_opts = {
   default_opts = {
     ['*'] = {
       ignore_pre = '\\\\', -- double backslash
-      ignore_after = '\\S', -- double backslash
+      ignore_after = '\\w', -- double backslash
     },
     lua = {
       ignore_pre = '[%\\\\]' -- double backslash
