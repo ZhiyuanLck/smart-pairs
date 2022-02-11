@@ -31,6 +31,14 @@ local Pairs = {
       ignore_pre = '[%\\\\]' -- double backslash
     }
   },
+  delete = {
+    empty_line = {
+      bracket = {
+        enable = true,
+        inden_level = 1
+      }
+    }
+  },
   cache = {}
 }
 
@@ -43,6 +51,18 @@ local function set_cursor(line, col)
   line = line == 0 and vim.fn.line('.') or line
   if type(col) == 'string' then col = vim.fn.strlen(col) end
   vim.api.nvim_win_set_cursor(0, {line, col})
+end
+
+-- merge two opts table
+local function merge(opts1, opts2)
+  if not opts2 then return end
+  for k, v in pairs(opts2) do
+    if type(v) == 'table' and opts1[k] then
+      merge(opts1[k], opts2[k])
+    else
+      opts1[k] = v
+    end
+  end
 end
 
 Pairs.__index = Pairs
@@ -105,9 +125,15 @@ end
 -- @field pairs table: custom pairs
 function Pairs:setup(opts)
   opts = opts or {}
+
   for ft, pairs in pairs(opts.pairs or {}) do
     self.pairs[ft] = pairs
   end
+
+  for ft, default_opts in pairs(opts.default_opts or {}) do
+    self.default_opts[ft] = default_opts
+  end
+
   -- init pair map
   self.lr, self.rl = {}, {}
   local new_pairs = {}
