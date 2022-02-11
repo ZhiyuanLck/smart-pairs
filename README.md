@@ -89,8 +89,7 @@ A `pair` is specified by
 ```lua
 { left, right, opts (optional) }
 opts = {
-  ignore_pre   = vim regex pattern, right bracket will never be completed when left bracket is
-    typeset after the pattern.
+  ignore_pre   = vim regex pattern, brackets after the pattern keep its original meaning.
   ignore_after = vim regex pattern, only for unbalanced brackets, right bracket will never be
     completed when left bracket is typeset before the pattern except the right bracket.
   ignore       = string or string list, when checking the validity of brackets or whether to ignore

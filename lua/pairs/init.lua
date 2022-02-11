@@ -396,6 +396,13 @@ end
 -- @param right bracket
 function Pairs:type_right_neq(left, right)
   local left_line, right_line = get_line()
+
+  local ignore_pre = self:ignore_pre(left_line, left)
+  if ignore_pre then
+    feedkeys(right)
+    return
+  end
+
   local lc, rc = get_count(left_line, right_line, left, right)
   local pos = vim.api.nvim_win_get_cursor(0)
   -- lots of left brackets more than right, we need the right one
