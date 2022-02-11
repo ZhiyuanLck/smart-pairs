@@ -64,13 +64,14 @@ local default_opts = {
   delete = {
     enable = true,
     empty_line = {
-      enable       = true,
-      enable_start = true,
-      enable_end   = true,
-      enable_text  = true,
-      bracket = {
-        enable = true,
-        indent_level = 1
+      enable           = true,
+      enable_start     = true,
+      enable_bracket   = true,
+      enable_multiline = true,
+      enable_oneline   = true,
+      trigger_indent_level = {
+        text = 0,
+        bracket = 1,
       }
     }
   },
@@ -128,18 +129,22 @@ opts = {
 **`delete.empty_line.enable_start`**: enable `<bs>` to delete empty lines smartly at start of file,
 default `true`.
 
-**`delete.empty_line.enable_end`**: enable `<bs>` to delete empty lines smartly at end of file,
+**`delete.empty_line.enable_bracket`**: enable `<bs>` to delete blanks between brackets smartly,
 default `true`.
 
-**`delete.empty_line.enable_text`**: enable `<bs>` to delete empty lines between text smartly,
+**`delete.empty_line.enable_multiline`**: enable `<bs>` to delete multiple empty lines smartly,
 default `true`.
 
-**`delete.empty_line.bracket.enable`**: enable `<bs>` to delete blanks between brackets smartly,
-default `true`.
+**`delete.empty_line.enable_oneline`**: enable `<bs>` to delete one empty line smartly, default
+`true`.
 
-**`delete.empty_line.bracket.indent_level`**: enable `<bs>` to delete blanks between brackets
-smartly, default `1`. Smart deletion is done only when the relative indent level is not greater than
-the option value.
+**`delete.empty_line.trigger_indent_level.text`**: smart deletion is triggered only when the
+relative indent level is less than the option value where the first nonempty line ***is not*** ended
+with a left bracket that can cross lines and/or spaces, default `0`.
+
+**`delete.empty_line.trigger_indent_level.bracket`**: smart deletion is triggered only when the
+relative indent level is less than the option value where the first nonempty line is ended with a
+left bracket that can cross lines and/or spaces, default `1`.
 
 ## Features
 
