@@ -248,8 +248,7 @@ Delete blanks between brackets
 
 
 {
->>> empty line
-␣␣|
+␣␣␣␣|
 }
 =================
 {
