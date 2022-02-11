@@ -32,15 +32,29 @@ local Pairs = {
     }
   },
   delete = {
+    enable = true,
     empty_line = {
+      enable       = true,
+      enable_start = true,
+      enable_end   = true,
+      enable_text  = true,
       bracket = {
         enable = true,
-        inden_level = 1
+        indent_level = 1
       }
     }
   },
   cache = {}
 }
+
+-- get the indent level of str in vim
+-- @param str string
+local function get_indent_level(str)
+  local indent = vim.api.nvim_strwidth('\\t')
+  local pre_space = str:match('^%s*'):gsub('\t', '\\t')
+  local cur_indent = vim.api.nvim_strwidth(pre_space)
+  return (cur_indent - cur_indent % indent) / indent
+end
 
 local function feedkeys(keys)
   keys = vim.api.nvim_replace_termcodes(keys, true, false, true)
@@ -91,7 +105,9 @@ function Pairs:set_keymap()
     map(r, fmt([[<cmd>lua require('pairs'):type_right("%s")<cr>]], r:gsub('"', '\\"')))
   end
   map('<space>', [[<cmd>lua require('pairs'):type_space()<cr>]])
-  map('<bs>', [[<cmd>lua require('pairs'):type_del()<cr>]])
+  if self.delete.enable then
+    map('<bs>', [[<cmd>lua require('pairs'):type_del()<cr>]])
+  end
   map('<cr>', [[<cmd>lua require('pairs'):type_enter()<cr>]])
   self:set_buf_keymap()
 end
@@ -125,6 +141,8 @@ end
 -- @field pairs table: custom pairs
 function Pairs:setup(opts)
   opts = opts or {}
+
+  merge(self.delete, opts.delete)
 
   for ft, pairs in pairs(opts.pairs or {}) do
     self.pairs[ft] = pairs
@@ -334,6 +352,8 @@ function Pairs:ignore_after(right_line, left)
   right_line = clean(right_line, left)
   local opts = self:get_opts(left)
   local ignore_after = opts.ignore_after
+  local right = self:get_right(left)
+  if right_line:match('^' .. escape(right)) then return false end
   return ignore_after and vim.fn.match(right_line, '^' .. ignore_after) ~= -1
 end
 
@@ -440,10 +460,11 @@ function Pairs:type_eq(bracket)
   end
 
   local ignore_pre = self:ignore_pre(left_line, bracket)
-  local ignore_after = self:ignore_after(right_line, bracket)
+  -- not consider ignore_after
+  -- local ignore_after = self:ignore_after(right_line, bracket)
 
   -- number of brackets of current line is odd, always complete
-  if ignore_pre or ignore_after or (left_count + right_count) % 2 == 1 then
+  if ignore_pre or (left_count + right_count) % 2 == 1 then
     complete()
   -- number of brackets of current line is even
   -- number of brackets of left side is even, which means the right side is also even
@@ -504,10 +525,16 @@ function Pairs:del_empty_lines()
   local cur_line = vim.api.nvim_get_current_line()
   local empty_line = cur_line:match('^%s*$') ~= nil
   local empty_pre
+
   if not empty_line then
     local left_line, _ = get_line()
     empty_pre = left_line:match('^%s*$') ~= nil
     if not empty_pre then return false end
+  end
+
+  if not self.delete.empty_line.enable then
+    feedkeys('<bs>')
+    return true
   end
 
   local linenr = vim.fn.line('.')
@@ -558,9 +585,13 @@ function Pairs:del_empty_lines()
 
   -- empty lines in the start of file
   if above_nr < 0 then
-    vim.cmd(fmt('silent 1,%dd', below_nr))
-    vim.api.nvim_win_set_cursor(0, {1, 1})
-    feedkeys('<esc>I')
+    if self.delete.empty_line.enable_start then
+      vim.cmd(fmt('silent 1,%dd', below_nr))
+      vim.api.nvim_win_set_cursor(0, {1, 1})
+      feedkeys('<esc>I')
+    else
+      feedkeys('<bs>')
+    end
     return true
   end
 
@@ -568,7 +599,8 @@ function Pairs:del_empty_lines()
 
   -- empty lines in the end of file
   if below_nr == end_nr then
-    if below_nr - above_nr > 2 then
+    -- normal deletion when only one empty line
+    if self.delete.empty_line.enable_end and below_nr - above_nr > 2 then
       vim.cmd(fmt('silent %d,%dd', above_nr + 2, end_nr))
       vim.api.nvim_buf_set_lines(0, above_nr, above_nr + 1, true, {line1})
       -- cannot set col to 1, which will cause indent problem
@@ -583,18 +615,30 @@ function Pairs:del_empty_lines()
   local line2 = vim.api.nvim_buf_get_lines(0, below_nr, below_nr + 1, true)[1]:match('^%s*(.-)$')
   -- delete all blanks and merge lines
   if left and right then
-    vim.cmd(fmt('silent %d,%dd', above_nr + 2, below_nr + 1))
-    vim.api.nvim_buf_set_lines(0, above_nr, above_nr + 1, true, {line1 .. line2})
-    vim.api.nvim_win_set_cursor(0, {above_nr + 1, vim.fn.strlen(line1)})
-  -- delete all blanks except the line of below_nr
+    if self.delete.empty_line.bracket.enable then
+      local indent1 = get_indent_level(line1)
+      local indent2 = get_indent_level(cur_line)
+      if indent2 - indent1 <= self.delete.empty_line.bracket.indent_level then
+        vim.cmd(fmt('silent %d,%dd', above_nr + 2, below_nr + 1))
+        vim.api.nvim_buf_set_lines(0, above_nr, above_nr + 1, true, {line1 .. line2})
+        vim.api.nvim_win_set_cursor(0, {above_nr + 1, vim.fn.strlen(line1)})
+      else
+        feedkeys('<bs>')
+      end
+    else
+      feedkeys('<bs>')
+    end
+  -- normal deletion for only one empty line
   elseif above_nr + 2 == below_nr then
     feedkeys('<bs>')
-  else -- leave an empty line
+  elseif self.delete.empty_line.enable_text then -- leave an empty line between text
     vim.cmd(fmt('silent %d,%dd', above_nr + 2, below_nr))
     vim.api.nvim_buf_set_lines(0, above_nr, above_nr + 1, true, {line1})
     -- cannot set col to 1, which will cause indent problem
     vim.api.nvim_win_set_cursor(0, {above_nr + 1, vim.fn.strlen(line1)})
     feedkeys('<esc>o')
+  else
+    feedkeys('<bs>')
   end
   return true
 end

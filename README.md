@@ -61,12 +61,25 @@ local default_opts = {
       ignore_pre = '[%\\\\]' -- double backslash
     }
   },
+  delete = {
+    enable = true,
+    empty_line = {
+      enable       = true,
+      enable_start = true,
+      enable_end   = true,
+      enable_text  = true,
+      bracket = {
+        enable = true,
+        indent_level = 1
+      }
+    }
+  },
 }
 ```
 
 ### Options
 
-`pairs`: pairs table specified by `filetype = pairs list`. Use `['*'] = ...` to represent for global pairs and options.
+**`pairs`**: pairs table specified by `filetype = pairs list`. Use `['*'] = ...` to represent for global pairs and options.
 
 A `pair` is specified by
 
@@ -75,18 +88,18 @@ A `pair` is specified by
 { left, right, opts (optional) }
 opts = {
   ignore_pre   = vim regex pattern, right bracket will never be completed when left bracket is
-    typeset after the pattern
-  ignore_after = vim regex pattern, right bracket will never be completed when left bracket is
-    typeset before the pattern
+    typeset after the pattern.
+  ignore_after = vim regex pattern, only for unbalanced brackets, right bracket will never be
+    completed when left bracket is typeset before the pattern except the right bracket.
   ignore       = string or string list, when checking the validity of brackets or whether to ignore
-    some patterns, these strings will be ignored, default escaped pairs
-  triplet      = boolean, only for balanced brackets, expand the triplet brackets, default false
+    some patterns, these strings will be ignored, default escaped pairs.
+  triplet      = boolean, only for balanced brackets, expand the triplet brackets, default false.
   cross_line   = boolean, whether the bracket can cross lines, this option only has effect on enter
-    action, default true for unbalanced pairs and false for balanced pairs
+    action, default true for unbalanced pairs and false for balanced pairs.
 }
 ```
 
-`default_opts`: global default values of pair options. The default values are
+**`default_opts`**: global default values of pair options. The default values are
 
 ```lua
   default_opts = {
@@ -100,6 +113,26 @@ opts = {
   },
 ```
 
+**`delete.enable`**: enable smart deletion.
+
+**`delete.empty_line.enable`**: enable `<bs>` to delete empty lines smartly, default `true`.
+
+**`delete.empty_line.enable_start`**: enable `<bs>` to delete empty lines smartly at start of file,
+default `true`.
+
+**`delete.empty_line.enable_end`**: enable `<bs>` to delete empty lines smartly at end of file,
+default `true`.
+
+**`delete.empty_line.enable_text`**: enable `<bs>` to delete empty lines between text smartly,
+default `true`.
+
+**`delete.empty_line.bracket.enable`**: enable `<bs>` to delete blanks between brackets smartly,
+default `true`.
+
+**`delete.empty_line.bracket.indent_level`**: enable `<bs>` to delete blanks between brackets
+smartly, default `1`. Smart deletion is done only when the relative indent level is not greater than
+the option value.
+
 ## Features
 
 ### Typeset Unbalanced Pairs
@@ -110,6 +143,7 @@ Typeset left bracket
 press (
 |    --> (|)
 |)   --> (|)
+(|a  --> (|a
 |()) --> (|())
 \|   --> \(|
 \\|  --> \\(|)
