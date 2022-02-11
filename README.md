@@ -8,12 +8,16 @@ One line to setup the plugin with `packer.nvim`
 use {'ZhiyuanLck/smart-pairs', event="InsertEnter", config=function() require('pairs'):setup() end}
 ```
 
-***Note***: this plugin is still in develop, so most behaviors are set by default. You can request the feature of
+***Note***: This plugin is still in develop, so most behaviors are set by default. You can request the feature of
 options that can control the default behaviors.
 
-***Note***: only support bracket of single char.
+***Note***: Only support bracket of single char.
 
-***Note***: lines in the examples below represent for the *whole line* not the part of line.
+***Note***: Lines in the examples below represent for the *whole line* not the part of line.
+
+***Note***: Unfortunately, the plugin cannot take every corner case into consideration and take care of the taste of all
+people. When the behavior of the plugin is not what you want and cannot be configured, just type the bracket with the
+prefix `<c-v>` to avoid the mapping, such as `<c-v>(` to get a original `(` bracket.
 
 ## Configuration
 
@@ -36,9 +40,9 @@ local default_opts = {
       {'"', '"'},
     },
     lua = {
-      {'(', ')', {ignore_pre = '[%\\]', ignore = {'%(', '%)', '\\(', '\\)'}}},
-      {'[', ']', {ignore_pre = '[%\\]', ignore = {'%[', '%]', '\\[', '\\]'}}},
-      {'{', '}', {ignore_pre = '[%\\]', ignore = {'%{', '%}', '\\{', '\\}'}}},
+      {'(', ')', {ignore = {'%(', '%)', '\\(', '\\)', '%%'}}},
+      {'[', ']', {ignore = {'%[', '%]', '\\[', '\\]', '%%'}}},
+      {'{', '}', {ignore = {'%{', '%}', '\\{', '\\}', '%%'}}},
     },
     python = {
       {"'", "'", {triplet = true}},
@@ -46,6 +50,15 @@ local default_opts = {
     },
     markdown = {
       {'`', '`', {triplet = true}},
+    }
+  },
+  default_opts = {
+    ['*'] = {
+      ignore_pre = '\\\\', -- double backslash
+      ignore_after = '\\S', -- double backslash
+    },
+    lua = {
+      ignore_pre = '[%\\\\]' -- double backslash
     }
   },
 }
@@ -57,19 +70,34 @@ local default_opts = {
 
 A `pair` is specified by
 
+<!-- tw=100 -->
 ```lua
 { left, right, opts (optional) }
 opts = {
-  ignore_pre = vim regex pattern, right bracket will never be completed when
-    left bracket is typeset after the pattern, default '\\'
-  ignore     = string or string list, when checking the validity of brackets,
-    these strings will be ignored, default escaped pairs
-  triplet    = boolean, only for balanced brackets, expand the triplet
-    brackets, default true
-  cross_line = boolean, whether the bracket can cross lines, this option only
-    has effect on enter action, default true for unbalanced pairs and false for
-    balanced pairs
+  ignore_pre   = vim regex pattern, right bracket will never be completed when left bracket is
+    typeset after the pattern
+  ignore_after = vim regex pattern, right bracket will never be completed when left bracket is
+    typeset before the pattern
+  ignore       = string or string list, when checking the validity of brackets or whether to ignore
+    some patterns, these strings will be ignored, default escaped pairs
+  triplet      = boolean, only for balanced brackets, expand the triplet brackets, default false
+  cross_line   = boolean, whether the bracket can cross lines, this option only has effect on enter
+    action, default true for unbalanced pairs and false for balanced pairs
 }
+```
+
+`default_opts`: global default values of pair options. The default values are
+
+```lua
+  default_opts = {
+    ['*'] = {
+      ignore_pre = '\\\\', -- double backslash
+      ignore_after = '\\S', -- double backslash
+    },
+    lua = {
+      ignore_pre = '[%\\\\]' -- double backslash
+    }
+  },
 ```
 
 ## Features
@@ -80,11 +108,12 @@ Typeset left bracket
 
 ```
 press (
-|       --> (|)
-|)      --> (|)
-|())    --> (|())
-\|      --> \(|
-'%|'    --> '%(' in lua
+|    --> (|)
+|)   --> (|)
+|()) --> (|())
+\|   --> \(|
+\\|  --> \\(|)
+'%|' --> '%(' in lua
 ```
 
 Typeset right bracket
@@ -95,7 +124,8 @@ press )
 (|      --> (|)
 (|)     --> ()|
 (a|b)   --> (ab)|
-|(ab)   --> (ab)|
+|(ab)   --> |)(ab)
+|(ab))  --> (ab)|)
 ('\(|') --> ('\(')|
 ('%(|') --> ('%(')| in lua
 ```

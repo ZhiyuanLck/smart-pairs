@@ -10,9 +10,9 @@ local Pairs = {
       {'"', '"'},
     },
     lua = {
-      {'(', ')', {ignore_pre = '[%\\]', ignore = {'%(', '%)', '\\(', '\\)'}}},
-      {'[', ']', {ignore_pre = '[%\\]', ignore = {'%[', '%]', '\\[', '\\]'}}},
-      {'{', '}', {ignore_pre = '[%\\]', ignore = {'%{', '%}', '\\{', '\\}'}}},
+      {'(', ')', {ignore = {'%(', '%)', '\\(', '\\)', '%%'}}},
+      {'[', ']', {ignore = {'%[', '%]', '\\[', '\\]', '%%'}}},
+      {'{', '}', {ignore = {'%{', '%}', '\\{', '\\}', '%%'}}},
     },
     python = {
       {"'", "'", {triplet = true}},
@@ -20,6 +20,15 @@ local Pairs = {
     },
     markdown = {
       {'`', '`', {triplet = true}},
+    }
+  },
+  default_opts = {
+    ['*'] = {
+      ignore_pre = '\\\\', -- double backslash
+      ignore_after = '\\S', -- double backslash
+    },
+    lua = {
+      ignore_pre = '[%\\\\]' -- double backslash
     }
   },
   cache = {}
@@ -80,6 +89,19 @@ function Pairs:set_buf_keymap()
   end
 end
 
+-- set the default value of option if user not provide a value
+-- @param ft string: file type
+-- @param pair table
+-- @param opt_key: option of the pair
+function Pairs:set_default_opts(ft, pair, opt_key)
+  if pair.opts[opt_key] then return end
+  if self.default_opts[ft] and self.default_opts[ft][opt_key] then
+    pair.opts[opt_key] = self.default_opts[ft][opt_key]
+  elseif self.default_opts['*'] and self.default_opts['*'][opt_key] then
+    pair.opts[opt_key] = self.default_opts['*'][opt_key]
+  end
+end
+
 -- @field pairs table: custom pairs
 function Pairs:setup(opts)
   opts = opts or {}
@@ -97,16 +119,12 @@ function Pairs:setup(opts)
     for _, pair in ipairs(pairs) do
       pair = Pr:new(pair)
 
-      if not pair.opts.ignore_pre then
-        pair.opts.ignore_pre = '\\'
-      end
+      self:set_default_opts(ft, pair, 'ignore_pre')
+      self:set_default_opts(ft, pair, 'ignore_after')
+      self:set_default_opts(ft, pair, 'triplet')
 
       if not pair.opts.ignore then
         pair.opts.ignore = {'\\' .. pair.left, '\\' .. pair.right}
-      end
-
-      if not pair.opts.triplet then
-        pair.opts.triplet = false
       end
 
       if not pair.opts.cross_line then
@@ -271,16 +289,26 @@ local function get_line()
   return left_line, right_line
 end
 
--- test whether to ignore the current bracket, e.g., just typeset one
+-- test whether to ignore the current left bracket
 -- @param left_line string: left part of current line separated by the cursor
 -- @param left string: left bracket
 -- @return boolean
-function Pairs:get_ignore_pre(left_line, left)
-  left_line = left_line:gsub('\\\\', '')
+function Pairs:ignore_pre(left_line, left)
+  left_line = clean(left_line, left)
   local opts = self:get_opts(left)
   local ignore_pre = opts.ignore_pre
-  local pattern = ignore_pre:gsub('\\', '\\\\') .. '$'
-  return ignore_pre and vim.fn.match(left_line, pattern) ~= -1
+  return ignore_pre and vim.fn.match(left_line, ignore_pre .. '$') ~= -1
+end
+
+-- test whether to completef the right bracket
+-- @param right_line string: left part of current line separated by the cursor
+-- @param left string: left bracket
+-- @return boolean
+function Pairs:ignore_after(right_line, left)
+  right_line = clean(right_line, left)
+  local opts = self:get_opts(left)
+  local ignore_after = opts.ignore_after
+  return ignore_after and vim.fn.match(right_line, '^' .. ignore_after) ~= -1
 end
 
 -- get left bracket count on the left and the right bracket count on the right
@@ -295,9 +323,10 @@ end
 -- action when typeset the left bracket
 function Pairs:type_left_neq(left, right)
   local left_line, right_line = get_line()
-  local ignore = self:get_ignore_pre(left_line, left)
+  local ignore_pre = self:ignore_pre(left_line, left)
+  local ignore_after = self:ignore_after(right_line, left)
 
-  if not ignore then
+  if not ignore_pre and not ignore_after then
     local lc, rc = get_count(left_line, right_line, left, right)
     if lc >= rc then
       right_line = right .. right_line
@@ -384,10 +413,11 @@ function Pairs:type_eq(bracket)
     complete()
   end
 
-  local ignore_pre = self:get_ignore_pre(left_line, bracket)
+  local ignore_pre = self:ignore_pre(left_line, bracket)
+  local ignore_after = self:ignore_after(right_line, bracket)
 
   -- number of brackets of current line is odd, always complete
-  if ignore_pre or (left_count + right_count) % 2 == 1 then
+  if ignore_pre or ignore_after or (left_count + right_count) % 2 == 1 then
     complete()
   -- number of brackets of current line is even
   -- number of brackets of left side is even, which means the right side is also even
