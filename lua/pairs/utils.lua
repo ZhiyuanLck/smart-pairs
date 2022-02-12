@@ -32,6 +32,7 @@ end
 -- @param str string
 -- @return number: indent level
 function M.get_indent_level(str)
+  -- wrong value in py, may need manually calculate
   local indent = vim.api.nvim_strwidth('\\t')
   local pre_space = str:match('^%s*'):gsub('\t', '\\t')
   local cur_indent = vim.api.nvim_strwidth(pre_space)
@@ -58,6 +59,53 @@ function M.merge(opts1, opts2)
       opts1[k] = v
     end
   end
+end
+
+-- @return left part of line separated by cursor
+function M.get_cursor_l()
+  local col = vim.fn.col('.') - 1
+  local line = vim.api.nvim_get_current_line()
+  return vim.fn.strpart(line, 0, col)
+end
+
+-- @return left and right part of line separated by cursor
+function M.get_cursor_lr()
+  local col = vim.fn.col('.') - 1
+  local line = vim.api.nvim_get_current_line()
+  local left_line = vim.fn.strpart(line, 0, col)
+  local right_line = vim.fn.strpart(line, col)
+  return left_line, right_line
+end
+
+-- escape lua patterns
+function M.escape(str)
+  local e = {'%', '(', ')', '[', '.', '*', '+', '-', '?', '^', '$'}
+  for _, ch in ipairs(e) do
+    str = str:gsub('%' .. ch, '%%%' .. ch)
+  end
+  return str
+end
+
+-- count the number of left brackets with remove of corresponding pairs
+-- @param str string
+-- @param left string: left bracket
+-- @param right string: right bracket
+function M.count(str, left, right)
+  local cur = 1
+  local n = 0
+  local ln, rn, sn = #left, #right, #str
+  repeat
+    if str:sub(cur, cur + ln - 1) == left then
+      n = n + 1
+      cur = cur + #left
+    elseif str:sub(cur, cur + rn - 1) == right then
+      n = n > 0 and n - 1 or n
+      cur = cur + #right
+    else
+      cur = cur + 1
+    end
+  until (cur > sn)
+  return n
 end
 
 local warn = function(msg)

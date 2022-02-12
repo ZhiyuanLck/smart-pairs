@@ -25,8 +25,8 @@ local Pairs = {
   },
   default_opts = {
     ['*'] = {
-      ignore_pre = '\\\\', -- double backslash
-      ignore_after = '\\w', -- double backslash
+      ignore_pre = '\\\\', -- double backslash or [[\\]]
+      ignore_after = '\\w', -- double backslash or [[\w]]
     },
     lua = {
       ignore_pre = '[%\\\\]' -- double backslash
@@ -73,17 +73,17 @@ function Pairs:set_keymap()
   end
   for _, pair in pairs(self.lr['*']) do
     local l, r = pair.left, pair.right
-    map(l, fmt([[<cmd>lua require('pairs'):type_left("%s")<cr>]], l:gsub('"', '\\"')))
-    map(r, fmt([[<cmd>lua require('pairs'):type_right("%s")<cr>]], r:gsub('"', '\\"')))
+    map(l, fmt([[<cmd>lua require('pairs.bracket').type_left("%s")<cr>]], l:gsub('"', '\\"')))
+    map(r, fmt([[<cmd>lua require('pairs.bracket').type_right("%s")<cr>]], r:gsub('"', '\\"')))
   end
   if self.delete.enable then
-    map('<bs>', [[<cmd>lua require('pairs'):type_del()<cr>]])
+    map('<bs>', [[<cmd>lua require('pairs.delete').type()<cr>]])
   end
   if self.enable_space then
-    map('<space>', [[<cmd>lua require('pairs'):type_space()<cr>]])
+    map('<space>', [[<cmd>lua require('pairs.space').type()<cr>]])
   end
   if self.enable_enter then
-    map('<cr>', [[<cmd>lua require('pairs'):type_enter()<cr>]])
+    map('<cr>', [[<cmd>lua require('pairs.enter').type()<cr>]])
   end
   self:set_buf_keymap()
 end
@@ -96,8 +96,8 @@ function Pairs:set_buf_keymap()
   end
   for _, pair in pairs(self.lr[ft]) do
     local l, r = pair.left, pair.right
-    map(l, fmt([[<cmd>lua require('pairs'):type_left("%s")<cr>]], l:gsub('"', '\\"')))
-    map(r, fmt([[<cmd>lua require('pairs'):type_right("%s")<cr>]], r:gsub('"', '\\"')))
+    map(l, fmt([[<cmd>lua require('pairs.bracket').type_left("%s")<cr>]], l:gsub('"', '\\"')))
+    map(r, fmt([[<cmd>lua require('pairs.bracket').type_right("%s")<cr>]], r:gsub('"', '\\"')))
   end
 end
 
@@ -254,61 +254,22 @@ function Pairs:get_pairs()
   return _pairs
 end
 
-local function escape(str)
-  local e = {'%', '(', ')', '[', '.', '*', '+', '-', '?', '^', '$'}
-  for _, ch in ipairs(e) do
-    str = str:gsub('%' .. ch, '%%%' .. ch)
-  end
-  return str
-end
-
 -- remove escaped brackets and ignore pattern
 -- @param line string: line to be processed
 -- @param left string: left bracket
 -- @return string: clean line
-local function clean(line, left)
+function Pairs:clean(line, left)
   line = line:gsub('\\\\', '')
-  line = line:gsub('\\' .. escape(left), '')
-  local right = Pairs:get_right(left)
+  line = line:gsub('\\' .. u.escape(left), '')
+  local right = self:get_right(left)
   if right ~= left then
-    line = line:gsub('\\' .. escape(right), '')
+    line = line:gsub('\\' .. u.escape(right), '')
   end
-  local ignore = Pairs:get_ignore(left)
+  local ignore = self:get_ignore(left)
   for _, pattern in ipairs(ignore) do
-    line = line:gsub(escape(pattern), '')
+    line = line:gsub(u.escape(pattern), '')
   end
   return line
-end
-
--- count the number of left brackets with remove of corresponding pairs
--- @param str string
--- @param left string: left bracket
--- @param right string: right bracket
-local function count(str, left, right)
-  local cur = 1
-  local n = 0
-  local ln, rn, sn = #left, #right, #str
-  repeat
-    if str:sub(cur, cur + ln - 1) == left then
-      n = n + 1
-      cur = cur + #left
-    elseif str:sub(cur, cur + rn - 1) == right then
-      n = n > 0 and n - 1 or n
-      cur = cur + #right
-    else
-      cur = cur + 1
-    end
-  until (cur > sn)
-  return n
-end
-
--- @return left and right part of line separated by cursor
-local function get_line()
-  local col = vim.fn.col('.') - 1
-  local line = vim.api.nvim_get_current_line()
-  local left_line = vim.fn.strpart(line, 0, col)
-  local right_line = vim.fn.strpart(line, col)
-  return left_line, right_line
 end
 
 -- test whether to ignore the current left bracket
@@ -316,10 +277,11 @@ end
 -- @param left string: left bracket
 -- @return boolean
 function Pairs:ignore_pre(left_line, left)
-  left_line = clean(left_line, left)
+  left_line = self:clean(left_line, left)
   local opts = self:get_opts(left)
-  local ignore_pre = opts.ignore_pre
-  return ignore_pre and vim.fn.match(left_line, ignore_pre .. '$') ~= -1
+  if not opts.ignore_pre then return false end
+  local ignore_pre = opts.ignore_pre .. '$'
+  return vim.fn.match(left_line, ignore_pre) ~= -1
 end
 
 -- test whether to completef the right bracket
@@ -327,390 +289,34 @@ end
 -- @param left string: left bracket
 -- @return boolean
 function Pairs:ignore_after(right_line, left)
-  right_line = clean(right_line, left)
+  right_line = self:clean(right_line, left)
   local opts = self:get_opts(left)
-  local ignore_after = opts.ignore_after
-  local right = self:get_right(left)
-  if right_line:match('^' .. escape(right)) then return false end
-  return ignore_after and vim.fn.match(right_line, '^' .. ignore_after) ~= -1
+  if not opts.ignore_after then return false end
+  local ignore_after = '^' .. opts.ignore_after
+  -- exclude the right bracket or all right brackets will be better ?
+  -- local right = self:get_right(left)
+  -- if right_line:match('^' .. escape(right)) then return false end
+  return ignore_after and vim.fn.match(right_line, ignore_after) ~= -1
 end
 
 -- get left bracket count on the left and the right bracket count on the right
-local function get_count(left_line, right_line, left, right)
-  local l = clean(left_line, left)
-  local r = clean(right_line, left)
-  local lc = count(l, left, right)
-  local rc = count(r:reverse(), right:reverse(), left:reverse())
+function Pairs:get_count(left_line, right_line, left, right)
+  local l = self:clean(left_line, left)
+  local r = self:clean(right_line, left)
+  local lc = u.count(l, left, right)
+  local rc = u.count(r:reverse(), right:reverse(), left:reverse())
   return lc, rc
-end
-
--- action when typeset the left bracket
-function Pairs:type_left_neq(left, right)
-  local left_line, right_line = get_line()
-  local ignore_pre = self:ignore_pre(left_line, left)
-  local ignore_after = self:ignore_after(right_line, left)
-
-  if not ignore_pre and not ignore_after then
-    local lc, rc = get_count(left_line, right_line, left, right)
-    if lc >= rc then
-      right_line = right .. right_line
-    end
-  end
-
-  left_line = left_line .. left
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  local pos = vim.api.nvim_win_get_cursor(0)
-  pos[2] = vim.fn.strlen(left_line)
-  vim.api.nvim_win_set_cursor(0, pos)
-end
-
--- action when typeset the right bracket
--- @param right bracket
-function Pairs:type_right_neq(left, right)
-  local left_line, right_line = get_line()
-
-  local ignore_pre = self:ignore_pre(left_line, left)
-  if ignore_pre then
-    u.feedkeys(right)
-    return
-  end
-
-  local lc, rc = get_count(left_line, right_line, left, right)
-  local pos = vim.api.nvim_win_get_cursor(0)
-  -- lots of left brackets more than right, we need the right one
-  -- or the first right bracket is to be typeset after revoming the counterbalances on the right
-  if lc > rc or rc == 0 then
-    left_line = left_line .. right
-    pos[2] = vim.fn.strlen(left_line)
-  -- now we have at least one right bracket on the right and then jump to it
-  else
-    local _, end_idx = right_line:find(right)
-    pos[2] = pos[2] + vim.fn.strlen(right_line:sub(1, end_idx))
-  end
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  vim.api.nvim_win_set_cursor(0, pos)
 end
 
 -- count occurrences of bracket, ignore escaped ones
 -- @param line string: line to be searched
 -- @param bracket: pattern
 -- @return number
-local function match_count(line, bracket)
-  line = clean(line, bracket)
+function Pairs:match_count(line, bracket)
+  line = self:clean(line, bracket)
   local n = 0
-  for _ in line:gmatch(escape(bracket)) do n = n + 1 end
+  for _ in line:gmatch(u.escape(bracket)) do n = n + 1 end
   return n
-end
-
--- action when two brackets are equal
--- @param bracket string
-function Pairs:type_eq(bracket)
-  local left_line, right_line = get_line()
-  local left_count = match_count(left_line, bracket)
-  local right_count = match_count(right_line, bracket)
-  local pos = vim.api.nvim_win_get_cursor(0)
-
-  -- process triplet bracket
-  if self:get_opts(bracket).triplet then
-    local pattern = escape(bracket)
-    local l = left_line
-    local n = 0
-    repeat
-      local i, _ = l:find(pattern .. '$')
-      if i then
-        n = n + 1
-        l = l:sub(1, i - 1)
-      end
-    until (n > 2 or i == nil)
-    local valid = n == 2 and not right_line:match('^' .. pattern)
-    if valid then
-      left_line = left_line .. bracket
-      right_line = string.rep(bracket, 3) .. right_line
-      pos[2] = vim.fn.strlen(left_line)
-      vim.api.nvim_set_current_line(left_line .. right_line)
-      vim.api.nvim_win_set_cursor(0, pos)
-      return
-    end
-  end
-
-  -- complete anothor bracket
-  local complete = function()
-    left_line = left_line .. bracket
-    pos[2] = vim.fn.strlen(left_line)
-  end
-  -- typeset two brackets
-  local typeset = function()
-    right_line = bracket .. right_line
-    complete()
-  end
-
-  local ignore_pre = self:ignore_pre(left_line, bracket)
-  -- not consider ignore_after
-  -- local ignore_after = self:ignore_after(right_line, bracket)
-
-  -- number of brackets of current line is odd, always complete
-  if ignore_pre or (left_count + right_count) % 2 == 1 then
-    complete()
-  -- number of brackets of current line is even
-  -- number of brackets of left side is even, which means the right side is also even
-  -- typeset two brackets
-  elseif left_count % 2 == 0 then -- typeset all
-    typeset()
-  -- left side is odd and right side is odd, which means you are inside the bracket scope
-  else
-    local i, j = right_line:find(bracket)
-    -- jump only if the right bracket is next to the cursor
-    if i == 1 then
-      pos[2] = pos[2] + vim.fn.strlen(right_line:sub(1, j))
-    else -- typeset two brackets
-      typeset()
-    end
-  end
-
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  vim.api.nvim_win_set_cursor(0, pos)
-end
-
-function Pairs:type_left(left)
-  local right = self:get_right(left)
-  if left == right then
-    self:type_eq(left)
-  else
-    self:type_left_neq(left, right)
-  end
-end
-
-function Pairs:type_right(right)
-  local left = self:get_left(right)
-  if left == right then
-    self:type_eq(right)
-  else
-    self:type_right_neq(left, right)
-  end
-end
-
-function Pairs:type_space()
-  local left_line, right_line = get_line()
-
-  for _, pair in ipairs(self:get_pairs()) do
-    local pl = escape(pair.left) .. '$'
-    local pr = '^' .. escape(pair.right)
-    if left_line:match(pl) and right_line:match(pr) then
-      right_line = ' ' .. right_line
-      break
-    end
-  end
-
-  left_line = left_line .. ' '
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  u.set_cursor(0, left_line)
-end
-
-function Pairs:del_empty_lines()
-  local cur_line = vim.api.nvim_get_current_line()
-  local empty_line = cur_line:match('^%s*$') ~= nil
-  local empty_pre
-
-  if not empty_line then
-    local left_line, _ = get_line()
-    empty_pre = left_line:match('^%s*$') ~= nil
-    if not empty_pre then return false end
-  end
-
-  if not self.delete.empty_line.enable then
-    u.feedkeys('<bs>')
-    return true
-  end
-
-  -- search up the first nonempty line
-  local linenr = vim.fn.line('.')
-  local cur = linenr - 2
-
-  local line
-  while (cur >= 0) do
-    line = u.get_line(cur)
-    if not line:match('^%s*$') then break end
-    cur = cur - 1
-  end
-
-  local left, has_left
-  if line then
-    for _, pair in ipairs(Pairs:get_pairs()) do
-      left = line:match(fmt('(%s)%%s*$', escape(pair.left)))
-      if left then
-        has_left = pair.opts.cross_line
-        break
-      end
-    end
-  end
-
-  -- 0-indexed line index of first nonempty line when searching up
-  local above_idx = cur
-
-  -- search down the first nonempty line
-  cur =  empty_pre and linenr - 1 or linenr -- handle empty pre
-  local end_nr = vim.fn.line('$')
-  while (cur < end_nr) do
-    line = u.get_line(cur)
-    if not line:match('^%s*$') then break end
-    cur = cur + 1
-  end
-
-  local has_right
-  if has_left and line then
-    has_right = line:match(fmt('^%%s*(%s)', escape(self:get_right(left))))
-  end
-
-  -- 0-indexed line index of first nonempty line when searching below
-  local below_idx = cur
-
-  -- if cursor is in the start of line
-  if empty_pre then
-    if below_idx - above_idx <= 2 then
-      u.feedkeys('<bs>')
-      return true
-    end
-  end
-
-  -- empty lines in the start of file
-  if above_idx < 0 then
-    if self.delete.empty_line.enable_start then
-      if below_idx ~= end_nr then
-        local col = u.get_line(below_idx):match('^%s*')
-        u.del_lines(0, below_idx)
-        u.set_cursor(1, col)
-      else
-        u.del_lines(0, below_idx)
-      end
-    else
-      u.feedkeys('<bs>')
-    end
-    return true
-  end
-
-  -- local line1 = vim.api.nvim_buf_get_lines(0, above_idx, above_idx + 1, true)[1]:match('^(.-)%s*$')
-  local line1 = u.get_line(above_idx):match('^(.-)%s*$')
-  local indent1 = u.get_indent_level(line1)
-  local indent2 = u.get_indent_level(cur_line)
-  -- if indent2 == 0, i.e. cursor col is 1 then <c-u> will act as <bs>
-  local trigger_text = indent2 > 0 and indent2 - indent1 <= self.delete.empty_line.trigger_indent_level.text
-  local loose_trigger_bracket = indent2 - indent1 <= self.delete.empty_line.trigger_indent_level.bracket
-  local trigger_bracket = indent2 > 0 and loose_trigger_bracket
-
-  -- inside brackets, all blanks are deleted
-  if has_left and has_right then
-    if self.delete.empty_line.enable_bracket and loose_trigger_bracket then
-      local line2 = u.get_line(below_idx):match('^%s*(.-)$')
-      u.del_lines(above_idx + 1, below_idx + 1)
-      u.set_line(above_idx, line1 .. line2)
-      u.set_cursor(above_idx + 1, vim.fn.strlen(line1))
-    else
-      u.feedkeys('<bs>')
-    end
-  -- multiple empty lines
-  elseif below_idx - above_idx > 2 then
-    if self.delete.empty_line.enable_multiline then
-      u.set_line(above_idx, line1)
-      if empty_pre then
-        local col = #u.get_line(below_idx):match('^%s*')
-        u.del_lines(above_idx + 1, below_idx - 1)
-        u.set_cursor(above_idx + 3, col)
-      else
-        u.del_lines(above_idx + 1, below_idx)
-        u.set_cursor(above_idx + 1, line1)
-        u.feedkeys('<cr>')
-      end
-    else
-      u.feedkeys('<bs>')
-    end
-  -- one empty line
-  elseif self.delete.empty_line.enable_oneline and not empty_pre then
-    u.set_line(above_idx, line1)
-    if left then
-      u.feedkeys(trigger_bracket and '<c-u><bs>' or '<bs>')
-    else
-      u.feedkeys(trigger_text and '<c-u><bs>' or '<bs>')
-    end
-  else
-    u.feedkeys('<bs>')
-  end
-  return true
-end
-
-function Pairs:type_del()
-  if self:del_empty_lines() then return end
-
-  local left_line, right_line = get_line()
-
-  local del_l, del_r
-  for _, pair in ipairs(Pairs:get_pairs()) do
-    local left_blank = left_line:match(escape(pair.left) .. '(%s*)$')
-    if not left_blank then goto continue end
-    del_l = #left_blank
-    -- local right_part, right_blank = right_line:match('^(%s*)' .. escape(pair.right))
-    local right_blank, right_part = right_line:match(fmt('^(%%s*)(%s)', escape(pair.right)))
-    del_r = right_blank and #right_blank or #right_line:match('^%s*')
-    if (del_l > 0 and del_r == 0) or (del_l == 1 and del_r == 1) then -- delete all blanks
-    -- leave two blank if has right bracke, otherwise delete all blanks
-    elseif del_l >= 1 and del_r >= 1 then
-      del_l = right_blank and del_l - 1 or del_l
-      del_r = right_blank and del_r - 1 or del_r
-    elseif right_blank then -- del_l == 0, del bracket
-      local lc, rc = get_count(left_line, right_line, pair.left, pair.right)
-      del_l = 1
-      del_r = lc > rc and del_r or del_r + #right_part
-    else -- del_l == 0, del single bracket
-      del_l = 1
-      del_r = del_r - 1
-    end
-    goto finish
-    ::continue::
-  end
-
-  if not del_l or (del_l == 1 and del_r == 0) then
-    u.feedkeys('<bs>')
-    return
-  end
-
-  ::finish::
-  if del_l > 0 then left_line = left_line:sub(1, #left_line - del_l) end
-  if del_r > 0 then right_line = right_line:sub(del_r + 1) end
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  u.set_cursor(0, left_line)
-end
-
-function Pairs:type_enter()
-  local left_line, right_line = get_line()
-
-  local bnl, bnr, has_right
-  for _, pair in ipairs(Pairs:get_pairs()) do
-    local left_blank = left_line:match(escape(pair.left) .. '(%s*)$')
-    local right_blank = right_line:match('^(%s*)' .. escape(pair.right))
-
-    if pair.opts.triplet then
-      has_right = right_line:match('^%s*' .. string.rep(escape(pair.right), 3))
-    else
-      has_right = pair.opts.cross_line and right_blank
-    end
-
-    if left_blank or right_blank then
-      bnl = left_blank and #left_blank or #left_line:match('%s*$')
-      bnr = right_blank and #right_blank or #right_line:match('^%s*')
-      break
-    end
-  end
-
-  if not bnl and not bnr then
-    bnl = #left_line:match('%s*$')
-    bnr = #right_line:match('^%s*')
-  end
-
-  left_line = bnl == 0 and left_line or left_line:sub(1, #left_line - bnl)
-  right_line = bnr == 0 and right_line or right_line:sub(bnr + 1)
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  u.set_cursor(0, left_line)
-
-  u.feedkeys(has_right and "<cr><esc>O" or "<cr>")
 end
 
 return Pairs
