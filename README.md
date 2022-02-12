@@ -200,6 +200,11 @@ current line, default `true`.
 **`delete.current_line.enable_fallback`**: function, if `delete.current_line.enable_cond` is
 evaluated to `false`, then the fallback function will be called, default `require('pairs.utils').delete`.
 
+## Work with Other Plugin
+
+Integrate smart enter and smart bracket with `nvim-cmp`:
+[workaround](https://github.com/ZhiyuanLck/smart-pairs/issues/2#issuecomment-1037232219)
+
 ## Features
 
 ### Typeset Unbalanced Pairs
