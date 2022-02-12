@@ -125,6 +125,7 @@ function M.type_left(left)
   else
     type_left_neq(left, right)
   end
+  return ''
 end
 
 function M.type_right(right)
@@ -134,6 +135,7 @@ function M.type_right(right)
   else
     type_right_neq(left, right)
   end
+  return ''
 end
 
 return M

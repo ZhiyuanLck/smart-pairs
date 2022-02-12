@@ -62,9 +62,12 @@ local default_opts = {
     }
   },
   delete = {
-    enable = true,
+    enable_mapping = true,
+    enable_cond = true,
+    enable_fallback = fb.delete,
     empty_line = {
-      enable           = true,
+      enable_cond      = true,
+      enable_fallback  = fb.delete,
       enable_start     = true,
       enable_bracket   = true,
       enable_multiline = true,
@@ -73,41 +76,56 @@ local default_opts = {
         text = 0,
         bracket = 1,
       }
+    },
+    current_line = {
+      enable_cond = true,
+      enable_fallback  = fb.delete,
     }
   },
-  enable_space = true,
-  enable_enter = true,
+  space = {
+    enable_mapping = true,
+    enable_cond = true,
+    enable_fallback = fb.space,
+  },
+  enter = {
+    enable_mapping = true,
+    enable_cond = true,
+    enable_fallback = fb.enter,
+  },
 }
 ```
 
 ### Options
 
-**`pairs`**: pairs table specified by `filetype = pairs list`. Use `['*'] = ...` to represent for global pairs and options.
+**`pairs`**: pairs table specified by `filetype = pairs list`. Use `['*'] = ...` to represent for
+global pairs and options.
 
-A `pair` is specified by
+A `pair` is specified by `{ left, right, opts (optional) }`
 
-<!-- tw=100 -->
-```lua
-{ left, right, opts (optional) }
-opts = {
-  ignore_pre   = vim regex pattern, brackets after the pattern keep its original meaning.
-  ignore_after = vim regex pattern, only for unbalanced brackets, right bracket will never be
-    completed when left bracket is typeset before the pattern except the right bracket.
-  ignore       = string or string list, when checking the validity of brackets or whether to ignore
-    some patterns, these strings will be ignored, default escaped pairs.
-  triplet      = boolean, only for balanced brackets, expand the triplet brackets, default false.
-  cross_line   = boolean, whether the bracket can cross lines, this option only has effect on enter
-    action, default true for unbalanced pairs and false for balanced pairs.
-}
-```
+#### pair options
+
+**`ignore_pre`**: vim regex pattern, brackets after the pattern keep its original meaning.
+
+**`ignore_after`**: vim regex pattern, only for unbalanced brackets, right bracket will never be
+completed when left bracket is typeset before the pattern except the right bracket.
+
+**`ignore`**: string or string list, these patterns will be removed before the current line is
+parsed to make strategies.
+
+**`triplet`**: boolean, only for balanced brackets, expand the triplet brackets, default false.
+
+**`cross_line`**: boolean, whether the bracket can cross lines, default true for unbalanced pairs
+and false for balanced pairs.
+
+#### global options
 
 **`default_opts`**: global default values of pair options. The default values are
 
 ```lua
   default_opts = {
     ['*'] = {
-      ignore_pre = '\\\\', -- double backslash
-      ignore_after = '\\S', -- double backslash
+      ignore_pre = '\\\\', -- double backslash or [[\\]]
+      ignore_after = '\\w', -- double backslash or [[\w]]
     },
     lua = {
       ignore_pre = '[%\\\\]' -- double backslash
@@ -115,28 +133,58 @@ opts = {
   },
 ```
 
-**`enable_space`**: enable smart space, if set to `false`, `<space>` will not be mapped, default
+**`space.enable_mapping`**: boolean or function, map `<space>` to enable smart space, if set to
+`false`, `<space>` will not be mapped, default `true`.
+
+**`space.enable_cond`**: boolean or function, condition to enable smart space, default `true`.
+
+**`space.enable_fallback`**: function, if `space.enable_cond` is evaluated to `false`, then the
+fallback function will be called, default `require('pairs.utils').space`.
+
+**`space.before_hook`**: hook function which is called before smart space is triggered.
+
+**`space.after_hook`**: hook function which is called after smart space is triggered.
+
+**`enter.enable_mapping`**: boolean or function, map `<cr>` to enable smart enter, if set to
+`false`, `<cr>` will not be mapped, default `true`.
+
+**`enter.enable_cond`**: boolean or function, condition to enable smart enter, default `true`.
+
+**`enter.enable_fallback`**: function, if `enter.enable_cond` is evaluated to `false`, then the
+fallback function will be called, default `require('pairs.utils').enter`.
+
+**`enter.before_hook`**: hook function which is called before smart enter is triggered.
+
+**`enter.after_hook`**: hook function which is called after smart enter is triggered.
+
+**`delete.enable_mapping`**: boolean or function, map `<bs>` to enable smart deletion, if set to
+`false`, `<bs>` will not be mapped, default `true`.
+
+**`delete.enable_cond`**: boolean or function, condition to enable smart deletion, default `true`.
+
+**`delete.enable_fallback`**: function, if `delete.enable_cond` is evaluated to `false`, then the
+fallback function will be called, default `require('pairs.utils').delete`.
+
+**`delete.before_hook`**: hook function which is called before smart deletion is triggered.
+
+**`delete.after_hook`**: hook function which is called after smart deletion is triggered.
+
+**`delete.empty_line.enable_cond`**: boolean or function, condition to enable smart deletion of
+empty lines, default `true`.
+
+**`delete.empty_line.enable_fallback`**: function, if `delete.empty_line.enable_cond` is evaluated
+to `false`, then the fallback function will be called, default `require('pairs.utils').delete`.
+
+**`delete.empty_line.enable_start`**: enable smart deletion of empty lines at start of file, default
 `true`.
 
-**`enable_enter`**: enable smart enter, if set to `false`, `<cr>` will not be mapped, default
+**`delete.empty_line.enable_bracket`**: enable smart deletion of blanks between brackets, default
 `true`.
 
-**`delete.enable`**: enable smart deletion, if set to `false`, `<bs>` will not be mapped, default
+**`delete.empty_line.enable_multiline`**: enable smart deletion of multiple empty lines, default
 `true`.
 
-**`delete.empty_line.enable`**: enable `<bs>` to delete empty lines smartly, default `true`.
-
-**`delete.empty_line.enable_start`**: enable `<bs>` to delete empty lines smartly at start of file,
-default `true`.
-
-**`delete.empty_line.enable_bracket`**: enable `<bs>` to delete blanks between brackets smartly,
-default `true`.
-
-**`delete.empty_line.enable_multiline`**: enable `<bs>` to delete multiple empty lines smartly,
-default `true`.
-
-**`delete.empty_line.enable_oneline`**: enable `<bs>` to delete one empty line smartly, default
-`true`.
+**`delete.empty_line.enable_oneline`**: enable smart deletion of one empty line, default `true`.
 
 **`delete.empty_line.trigger_indent_level.text`**: smart deletion is triggered only when the
 relative indent level is less than the option value where the first nonempty line ***is not*** ended
@@ -145,6 +193,12 @@ with a left bracket that can cross lines and/or spaces, default `0`.
 **`delete.empty_line.trigger_indent_level.bracket`**: smart deletion is triggered only when the
 relative indent level is less than the option value where the first nonempty line is ended with a
 left bracket that can cross lines and/or spaces, default `1`.
+
+**`delete.current_line.enable_cond`**: boolean or function, condition to enable smart deletion in
+current line, default `true`.
+
+**`delete.current_line.enable_fallback`**: function, if `delete.current_line.enable_cond` is
+evaluated to `false`, then the fallback function will be called, default `require('pairs.utils').delete`.
 
 ## Features
 

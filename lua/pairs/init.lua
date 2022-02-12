@@ -1,5 +1,6 @@
 local fmt = string.format
 local u = require('pairs.utils')
+local fb = require('pairs.fallback')
 
 local Pairs = {
   pairs = {
@@ -33,9 +34,12 @@ local Pairs = {
     }
   },
   delete = {
-    enable = true,
+    enable_mapping = true,
+    enable_cond = true,
+    enable_fallback = fb.delete,
     empty_line = {
-      enable           = true,
+      enable_cond      = true,
+      enable_fallback  = fb.delete,
       enable_start     = true,
       enable_bracket   = true,
       enable_multiline = true,
@@ -44,10 +48,22 @@ local Pairs = {
         text = 0,
         bracket = 1,
       }
+    },
+    current_line = {
+      enable_cond = true,
+      enable_fallback  = fb.delete,
     }
   },
-  enable_space = true,
-  enable_enter = true,
+  space = {
+    enable_mapping = true,
+    enable_cond = true,
+    enable_fallback = fb.space,
+  },
+  enter = {
+    enable_mapping = true,
+    enable_cond = true,
+    enable_fallback = fb.enter,
+  },
   cache = {}
 }
 
@@ -76,13 +92,13 @@ function Pairs:set_keymap()
     map(l, fmt([[<cmd>lua require('pairs.bracket').type_left("%s")<cr>]], l:gsub('"', '\\"')))
     map(r, fmt([[<cmd>lua require('pairs.bracket').type_right("%s")<cr>]], r:gsub('"', '\\"')))
   end
-  if self.delete.enable then
+  if u.enable(self.delete.enable_mapping) then
     map('<bs>', [[<cmd>lua require('pairs.delete').type()<cr>]])
   end
-  if self.enable_space then
+  if u.enable(self.space.enable_mapping) then
     map('<space>', [[<cmd>lua require('pairs.space').type()<cr>]])
   end
-  if self.enable_enter then
+  if u.enable(self.enter.enable_mapping) then
     map('<cr>', [[<cmd>lua require('pairs.enter').type()<cr>]])
   end
   self:set_buf_keymap()
@@ -118,9 +134,10 @@ end
 function Pairs:setup(opts)
   opts = opts or {}
 
+  u.check_opts(opts)
   u.merge(self.delete, opts.delete)
-
-  u.check_outdated(self)
+  u.merge(self.space, opts.space)
+  u.merge(self.enter, opts.enter)
 
   for ft, pairs in pairs(opts.pairs or {}) do
     self.pairs[ft] = pairs

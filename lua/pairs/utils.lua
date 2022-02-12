@@ -108,7 +108,20 @@ function M.count(str, left, right)
   return n
 end
 
-local warn = function(msg)
+-- if opt is boolean return opt, then is a function
+function M.enable(opt)
+  if opt == nil then return true end
+  if type(opt) == 'boolean' then return opt end
+  if type(opt) == 'function' then return opt() end
+  error('enable option should be a boolean or function')
+end
+
+function M.call(func, ...)
+  if not func then return end
+  return func(...)
+end
+
+local function warn(msg)
   vim.cmd(fmt([[
     echohl WarningMsg
     echom "smart-pair warning: %s"
@@ -117,13 +130,33 @@ local warn = function(msg)
 end
 
 -- warn outdated options
-function M.check_outdated(opts)
-  if opts.delete.empty_line.bracket then
-    warn("option delete.empty_line.bracket is outdated")
+function M.check_opts(opts)
+
+  local get_opt = function(opt)
+    local ret = opts
+    for key in vim.gsplit(opt, '%.') do
+      if not ret then return nil end
+      ret = ret[key]
+    end
+    return ret
   end
-  if opts.delete.empty_line.enable_end then
-    warn("option delete.empty_line.enable_end is outdated")
+
+  local opt_warn = function(opt, alt)
+    if not get_opt(opt) then return end
+    if alt then
+      warn(fmt("option '%s' has been removed, use '%s' instead", opt, alt))
+    else
+      warn(fmt("option '%s' has been removed", opt))
+    end
   end
+
+  -- 2022/2/11
+  opt_warn('delete.empty_line.bracket')
+  opt_warn('delete.empty_line.enable_end')
+  -- 2022/2/12
+  opt_warn('delete.empty_line.enable', 'delete.empty_line.enable_mapping')
+  opt_warn('enable_space', 'space.enable_mapping')
+  opt_warn('enable_enter', 'enter.enable_mapping')
 end
 
 return M

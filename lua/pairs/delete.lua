@@ -16,8 +16,8 @@ local function del_empty_lines()
 
   local opts = P.delete.empty_line
 
-  if not opts.enable then
-    u.feedkeys('<bs>')
+  if not u.enable(opts.enable_cond) then
+    opts.enable_fallback()
     return true
   end
 
@@ -63,17 +63,15 @@ local function del_empty_lines()
   -- 0-indexed line index of first nonempty line when searching below
   local below_idx = cur
 
-  -- if cursor is in the start of line
-  if empty_pre then
-    if below_idx - above_idx <= 2 then
-      u.feedkeys('<bs>')
-      return true
-    end
+  -- if cursor is in the start of line with at most one empty line and not has left bracket
+  if empty_pre and not has_left and below_idx - above_idx <= 2 then
+    u.feedkeys('<bs>')
+    return true
   end
 
   -- empty lines in the start of file
   if above_idx < 0 then
-    if opts.enable_start then
+    if u.enable(opts.enable_start) then
       if below_idx ~= end_nr then
         local col = u.get_line(below_idx):match('^%s*')
         u.del_lines(0, below_idx)
@@ -98,7 +96,7 @@ local function del_empty_lines()
 
   -- inside brackets, all blanks are deleted
   if has_left and has_right then
-    if opts.enable_bracket and loose_trigger_bracket then
+    if u.enable(opts.enable_bracket) and loose_trigger_bracket then
       local line2 = u.get_line(below_idx):match('^%s*(.-)$')
       u.del_lines(above_idx + 1, below_idx + 1)
       u.set_line(above_idx, line1 .. line2)
@@ -108,12 +106,17 @@ local function del_empty_lines()
     end
   -- multiple empty lines
   elseif below_idx - above_idx > 2 then
-    if opts.enable_multiline then
+    if u.enable(opts.enable_multiline) then
       u.set_line(above_idx, line1)
       if empty_pre then
         local col = #u.get_line(below_idx):match('^%s*')
-        u.del_lines(above_idx + 1, below_idx - 1)
-        u.set_cursor(above_idx + 3, col)
+        if has_left then -- do not leave blanks
+          u.del_lines(above_idx + 1, below_idx)
+          u.set_cursor(above_idx + 2, col)
+        else
+          u.del_lines(above_idx + 1, below_idx - 1)
+          u.set_cursor(above_idx + 3, col)
+        end
       else
         u.del_lines(above_idx + 1, below_idx)
         u.set_cursor(above_idx + 1, line1)
@@ -123,7 +126,7 @@ local function del_empty_lines()
       u.feedkeys('<bs>')
     end
   -- one empty line
-  elseif opts.enable_oneline and not empty_pre then
+  elseif u.enable(opts.enable_oneline) and not empty_pre then
     u.set_line(above_idx, line1)
     if left then
       u.feedkeys(trigger_bracket and '<c-u><bs>' or '<bs>')
@@ -136,9 +139,7 @@ local function del_empty_lines()
   return true
 end
 
-function M.type()
-  if del_empty_lines() then return end
-
+local function del_current_line()
   local left_line, right_line = u.get_cursor_lr()
 
   local del_l, del_r
@@ -176,6 +177,23 @@ function M.type()
   if del_r > 0 then right_line = right_line:sub(del_r + 1) end
   vim.api.nvim_set_current_line(left_line .. right_line)
   u.set_cursor(0, left_line)
+end
+
+function M.type()
+  if not u.enable(P.delete.enable_cond) then
+    return P.delete.enable_fallback() or ''
+  end
+
+  if del_empty_lines() then return '' end
+
+  if not u.enable(P.delete.current_line.enable_cond) then
+    return P.delete.current_line.enable_fallback() or ''
+  end
+
+  u.call(P.delete.before_hook)
+  del_current_line()
+  u.call(P.delete.after_hook)
+  return ''
 end
 
 return M

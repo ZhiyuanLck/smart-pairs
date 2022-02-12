@@ -2,7 +2,7 @@ local M = {}
 local u = require('pairs.utils')
 local P = require('pairs')
 
-function M.type()
+local function type_aux()
   local left_line, right_line = u.get_cursor_lr()
 
   local bnl, bnr, has_right
@@ -34,6 +34,17 @@ function M.type()
   u.set_cursor(0, left_line)
 
   u.feedkeys(has_right and "<cr><esc>O" or "<cr>")
+end
+
+function M.type()
+  if not u.enable(P.enter.enable_cond) then
+    return P.enter.enable_fallback() or ''
+  end
+
+  u.call(P.enter.before_hook)
+  type_aux()
+  u.call(P.enter.after_hook)
+  return ''
 end
 
 return M
