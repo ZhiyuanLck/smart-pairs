@@ -358,3 +358,20 @@ text2
 |
 '''
 ```
+
+## Interfaces for Advanced Users
+
+`require('pairs.space').type()`: smart space action
+
+`require('pairs.enter').type()`: smart enter action
+
+`require('pairs.delete').type()`: smart deletion action
+
+`require('pairs.bracket').type_left(left)`: smart left bracket action
+
+`require('pairs.bracket').type_right(right)`: smart right bracket action
+
+`require('pairs.utils').get_cursor_lr()`: get the left and right part of the current line under the
+cursor
+
+`require('pairs.utils').feedkeys(keys, mode='n')`: feed keys to vim, default not remapped.

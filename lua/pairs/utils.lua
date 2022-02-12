@@ -23,9 +23,10 @@ function M.set_line(idx, line)
   vim.api.nvim_buf_set_lines(0, idx, idx + 1, true, {line})
 end
 
-function M.feedkeys(keys)
+function M.feedkeys(keys, mode)
+  mode = mode or 'n'
   keys = vim.api.nvim_replace_termcodes(keys, true, false, true)
-  vim.api.nvim_feedkeys(keys, 'n', true)
+  vim.api.nvim_feedkeys(keys, mode, true)
 end
 
 -- get the indent level of str in vim
