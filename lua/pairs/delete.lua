@@ -118,7 +118,7 @@ local function del_empty_lines()
         u.set_line(above_idx + 1, left_line)
         u.set_cursor(above_idx + 2, left_line)
       elseif loose_trigger_bracket then
-        local line2 = u.get_line(below_idx):match('^%s*(.-)$')
+        local line2 = u.get_line(below_idx):match('^%s*(.-)%s*$')
         u.del_lines(above_idx + 1, below_idx + 1)
         u.set_line(above_idx, line1 .. line2)
         u.set_cursor(above_idx + 1, vim.fn.strlen(line1))
@@ -209,7 +209,7 @@ local function del_current_line()
   ::finish::
   if del_l > 0 then left_line = left_line:sub(1, #left_line - del_l) end
   if del_r > 0 then right_line = right_line:sub(del_r + 1) end
-  vim.api.nvim_set_current_line(left_line .. right_line)
+  vim.api.nvim_set_current_line(left_line .. right_line:match('(.-)%s*$'))
   u.set_cursor(0, left_line)
 end
 
