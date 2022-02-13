@@ -64,7 +64,6 @@ local Pairs = {
     enable_cond     = true,
     enable_fallback = fb.enter,
   },
-  cache = {}
 }
 
 Pairs.__index = Pairs
@@ -152,7 +151,7 @@ function Pairs:setup(opts)
   local new_pairs = {}
 
   for ft, pairs in pairs(self.pairs) do
-    local ft_pairs = {}
+    new_pairs[ft] = {}
     self.lr[ft], self.rl[ft] = {}, {}
 
     for _, pair in ipairs(pairs) do
@@ -178,15 +177,25 @@ function Pairs:setup(opts)
         pair.opts.enable_smart_space = pair.left ~= pair.right
       end
 
-      table.insert(ft_pairs, pair)
+      table.insert(new_pairs[ft], pair)
       self.lr[ft][pair.left] = pair
       self.rl[ft][pair.right] = pair
     end
-
-    new_pairs[ft] = ft_pairs
   end
 
   self.pairs = new_pairs
+
+  -- merge global pairs to ft_pairs
+  for ft, pairs in pairs(self.pairs) do
+    if ft ~= '*' then
+      for _, pair in ipairs(self.pairs['*']) do
+        if not self.lr[ft][pair.left] then
+          table.insert(pairs, pair)
+        end
+      end
+    end
+  end
+
   self:set_keymap()
   vim.cmd([[
     aug Pairs
@@ -256,23 +265,7 @@ end
 
 function Pairs:get_pairs()
   local ft = vim.o.filetype
-  if self.cache[ft] and self.cache[ft].pairs then
-    return self.cache[ft].pairs
-  end
-  local lr = {}
-  local _pairs = {}
-  for _, pair in pairs(self.lr['*'] or {}) do
-    lr[pair.left] = pair
-  end
-  for _, pair in pairs(self.lr[ft] or {}) do
-    lr[pair.left] = pair
-  end
-  for _, pair in pairs(lr) do
-    table.insert(_pairs, pair)
-  end
-  self.cache[ft] = self.cache[ft] or {}
-  self.cache[ft].pairs = _pairs
-  return _pairs
+  return self.pairs[ft] or self.pairs['*']
 end
 
 -- remove escaped brackets and ignore pattern
