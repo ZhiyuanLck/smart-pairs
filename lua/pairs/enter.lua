@@ -31,11 +31,12 @@ local function type_aux()
 
   if has_left then
     local indent = left_line:match('^%s*')
+    right_line = indent .. right_line
     if feed_tab then
       indent = indent .. (vim.bo.et and string.rep(' ', vim.bo.sw) or '\t')
     end
     vim.api.nvim_set_current_line(left_line)
-    vim.fn.append(linenr, has_right and {indent, right_line} or indent .. right_line)
+    vim.fn.append(linenr, has_right and {indent, right_line} or right_line)
     u.set_cursor(linenr + 1, indent)
   else
     vim.api.nvim_set_current_line(left_line .. right_line)
