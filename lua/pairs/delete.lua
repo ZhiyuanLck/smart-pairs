@@ -6,12 +6,12 @@ local P = require('pairs')
 -- delete to less indent
 local function delete_less_indent()
   local cur_line = vim.api.nvim_get_current_line()
-  local cur_wd = vim.api.nvim_strwidth(cur_line:match('^%s*'))
+  local cur_wd = vim.fn.strdisplaywidth(cur_line:match('^%s*'))
   if cur_wd == 0 then u.feedkeys('<bs>') return end
   local cur = vim.fn.line('.') - 2
   while (cur >= 0) do
     local indent = u.get_line(cur):match('^%s*')
-    if vim.api.nvim_strwidth(indent) < cur_wd then
+    if vim.fn.strdisplaywidth(indent) < cur_wd then
       -- why need extra ()?
       vim.api.nvim_set_current_line((cur_line:gsub('^%s*', indent)))
       u.set_cursor(0, indent)

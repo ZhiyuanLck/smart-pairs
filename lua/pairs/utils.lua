@@ -33,10 +33,8 @@ end
 -- @param str string
 -- @return number: indent level
 function M.get_indent_level(str)
-  -- wrong value in py, may need manually calculate
-  local indent = vim.api.nvim_strwidth('\\t')
-  local pre_space = str:match('^%s*'):gsub('\t', '\\t')
-  local cur_indent = vim.api.nvim_strwidth(pre_space)
+  local indent = vim.fn.strdisplaywidth("\t")
+  local cur_indent = vim.fn.strdisplaywidth(str:match('^%s*'))
   return (cur_indent - cur_indent % indent) / indent
 end
 
