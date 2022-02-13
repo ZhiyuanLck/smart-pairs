@@ -34,34 +34,34 @@ local Pairs = {
     }
   },
   delete = {
-    enable_mapping = true,
-    enable_cond = true,
+    enable_mapping  = true,
+    enable_cond     = true,
     enable_fallback = fb.delete,
     empty_line = {
       enable_cond      = true,
       enable_fallback  = fb.delete,
-      enable_start     = true,
-      enable_bracket   = true,
-      enable_multiline = true,
-      enable_oneline   = true,
-      trigger_indent_level = {
-        text = 0,
-        bracket = 1,
-      }
+      enable_sub = {
+        start                      = true,
+        inside_brackets            = true,
+        left_bracket               = true,
+        text_multi_line            = true,
+        text_delete_to_prev_indent = true,
+      },
+      trigger_indent_level = 1,
     },
     current_line = {
-      enable_cond = true,
-      enable_fallback  = fb.delete,
+      enable_cond     = true,
+      enable_fallback = fb.delete,
     }
   },
   space = {
-    enable_mapping = true,
-    enable_cond = true,
+    enable_mapping  = true,
+    enable_cond     = true,
     enable_fallback = fb.space,
   },
   enter = {
-    enable_mapping = true,
-    enable_cond = true,
+    enable_mapping  = true,
+    enable_cond     = true,
     enable_fallback = fb.enter,
   },
   cache = {}

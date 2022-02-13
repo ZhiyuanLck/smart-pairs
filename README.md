@@ -62,34 +62,34 @@ local default_opts = {
     }
   },
   delete = {
-    enable_mapping = true,
-    enable_cond = true,
+    enable_mapping  = true,
+    enable_cond     = true,
     enable_fallback = fb.delete,
     empty_line = {
       enable_cond      = true,
       enable_fallback  = fb.delete,
-      enable_start     = true,
-      enable_bracket   = true,
-      enable_multiline = true,
-      enable_oneline   = true,
-      trigger_indent_level = {
-        text = 0,
-        bracket = 1,
-      }
+      enable_sub = {
+        start                      = true,
+        inside_brackets            = true,
+        left_bracket               = true,
+        text_multi_line            = true,
+        text_delete_to_prev_indent = true,
+      },
+      trigger_indent_level = 1,
     },
     current_line = {
-      enable_cond = true,
-      enable_fallback  = fb.delete,
+      enable_cond     = true,
+      enable_fallback = fb.delete,
     }
   },
   space = {
-    enable_mapping = true,
-    enable_cond = true,
+    enable_mapping  = true,
+    enable_cond     = true,
     enable_fallback = fb.space,
   },
   enter = {
-    enable_mapping = true,
-    enable_cond = true,
+    enable_mapping  = true,
+    enable_cond     = true,
     enable_fallback = fb.enter,
   },
 }
@@ -175,24 +175,114 @@ empty lines, default `true`.
 **`delete.empty_line.enable_fallback`**: function, if `delete.empty_line.enable_cond` is evaluated
 to `false`, then the fallback function will be called, default `require('pairs.utils').delete`.
 
-**`delete.empty_line.enable_start`**: enable smart deletion of empty lines at start of file, default
-`true`.
+**`delete.empty_line.enable_sub.start`**: enable smart deletion of empty lines at start of file,
+default `true`.
 
-**`delete.empty_line.enable_bracket`**: enable smart deletion of blanks between brackets, default
-`true`.
+```
+>>> start of file
+>>> empty line
+>>> empty line
+␣␣|
+text
+=================
+>>> start of file
+|text
 
-**`delete.empty_line.enable_multiline`**: enable smart deletion of multiple empty lines, default
-`true`.
 
-**`delete.empty_line.enable_oneline`**: enable smart deletion of one empty line, default `true`.
+>>> start of file
+>>> empty line
+>>> empty line
+␣␣|text
+=================
+>>> start of file
+␣␣|text
+```
 
-**`delete.empty_line.trigger_indent_level.text`**: smart deletion is triggered only when the
-relative indent level is less than the option value where the first nonempty line ***is not*** ended
-with a left bracket that can cross lines and/or spaces, default `0`.
+**`delete.empty_line.enable_sub.inside_brackets`**: enable smart deletion of blanks between
+brackets, default `true`.
 
-**`delete.empty_line.trigger_indent_level.bracket`**: smart deletion is triggered only when the
-relative indent level is less than the option value where the first nonempty line is ended with a
-left bracket that can cross lines and/or spaces, default `1`.
+```
+First deletion will delete all but current empty line
+=================
+{
+
+␣␣␣␣|
+}
+
+Second deletion will delete a tab
+=================
+{
+␣␣␣␣|
+}
+=================
+{
+␣␣|
+}
+
+Now the relative indent level is 1, smart deletion is triggered
+=================
+{|}
+```
+
+**`delete.empty_line.enable_sub.left_bracket`**: enable smart deletion of empty lines when only a
+left bracket is detected, default `true`.
+
+```
+{
+
+␣␣|text
+=================
+{
+␣␣|text
+=================
+{|text
+```
+
+**`delete.empty_line.enable_sub.text_multi_line`**: enable smart deletion of multiple empty lines
+between text, default `true`.
+
+```
+text1
+
+
+  |text2
+=================
+text1
+
+  |text2
+
+-----------------
+
+text1
+
+
+  |
+  text2
+=================
+text1
+  |
+  text2
+```
+
+**`delete.empty_line.enable_sub.text_delete_to_prev_indent`**: enable smart deletion when there is
+one empty line or zero empty line but there are blanks before the cursor, then it will delete to the
+previsous indentation, default `true`.
+
+```
+text1
+  text2
+          |
+    text3
+=================
+text1
+  text2
+  |
+    text3
+```
+
+**`delete.empty_line.trigger_indent_level`**: smart deletion is triggered only when the relative
+indent level is less than the option value where the first nonempty line is ended with a left
+bracket that can cross lines and/or spaces, default `1`.
 
 **`delete.current_line.enable_cond`**: boolean or function, condition to enable smart deletion in
 current line, default `true`.
@@ -256,8 +346,6 @@ press <space>
 
 ### Smart Deletion
 
-#### Delete in curren line
-
 ```
 press <bs>
 {|}     --> |
@@ -270,76 +358,6 @@ press <bs>
 {␣␣|ab  --> {|ab
 {␣␣|␣ab --> {|ab
 {|␣␣␣ab --> |␣ab
-```
-
-#### Delete empty lines
-
-Delete empty lines at start of file
-
-```
->>> start of file
->>> empty line
->>> empty line
-␣␣|
-text
-=================
->>> start of file
-|text
-
-
->>> start of file
->>> empty line
->>> empty line
-␣␣|text
-=================
->>> start of file
-␣␣|text
-```
-
-Delete empty lines at end of file
-```
-text
->>> empty line
-␣␣|
->>> empty line
->>> end of file
-=================
-text
-␣␣|
->>> end of file
-```
-
-Delete blanks between brackets
-
-```
-{
-␣␣|
-}
-=================
-{|}
-
-
-{
-␣␣␣␣|
-}
-=================
-{
-␣␣|
-}
-```
-
-Delete blanks between text
-
-```
-text1␣␣␣
->>> empty line
->>> empty line
-␣␣|
-text2
-=================
-text1
-␣␣|
-text2
 ```
 
 ### Smart Enter

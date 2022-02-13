@@ -158,6 +158,13 @@ function M.check_opts(opts)
   opt_warn('delete.empty_line.enable', 'delete.empty_line.enable_mapping')
   opt_warn('enable_space', 'space.enable_mapping')
   opt_warn('enable_enter', 'enter.enable_mapping')
+  -- 2022/2/13
+  opt_warn('delete.empty_line.trigger_indent_level.text')
+  opt_warn('delete.empty_line.trigger_indent_level.bracket', 'delete.empty_line.trigger_indent_level')
+  opt_warn('delete.empty_line.enable_start', 'delete.empty_line.enable_sub.start')
+  opt_warn('delete.empty_line.enable_bracket', 'delete.empty_line.enable_sub.inside_brackets')
+  opt_warn('delete.empty_line.enable_multiline', 'delete.empty_line.enable_sub.text_multi_line')
+  opt_warn('delete.empty_line.enable_oneline', 'delete.empty_line.enable_sub.text_delete_to_prev_indent')
 end
 
 return M

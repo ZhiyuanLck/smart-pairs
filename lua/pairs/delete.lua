@@ -3,13 +3,32 @@ local fmt = string.format
 local u = require('pairs.utils')
 local P = require('pairs')
 
+-- delete to less indent
+local function delete_less_indent()
+  local cur_line = vim.api.nvim_get_current_line()
+  local cur_wd = vim.api.nvim_strwidth(cur_line:match('^%s*'))
+  if cur_wd == 0 then u.feedkeys('<bs>') return end
+  local cur = vim.fn.line('.') - 2
+  while (cur >= 0) do
+    local indent = u.get_line(cur):match('^%s*')
+    if vim.api.nvim_strwidth(indent) < cur_wd then
+      -- why need extra ()?
+      vim.api.nvim_set_current_line((cur_line:gsub('^%s*', indent)))
+      u.set_cursor(0, indent)
+      return
+    end
+    cur = cur - 1
+  end
+  u.feedkeys('<bs>')
+end
+
 local function del_empty_lines()
   local cur_line = vim.api.nvim_get_current_line()
+  local left_line = u.get_cursor_l()
   local empty_line = cur_line:match('^%s*$') ~= nil
   local empty_pre
 
   if not empty_line then
-    local left_line = u.get_cursor_l()
     empty_pre = left_line:match('^%s*$') ~= nil
     if not empty_pre then return false end
   end
@@ -63,15 +82,13 @@ local function del_empty_lines()
   -- 0-indexed line index of first nonempty line when searching below
   local below_idx = cur
 
-  -- if cursor is in the start of line with at most one empty line and not has left bracket
-  if empty_pre and not has_left and below_idx - above_idx <= 2 then
-    u.feedkeys('<bs>')
-    return true
+  local enable_sub = function(cond)
+    return u.enable(opts.enable_sub[cond])
   end
 
   -- empty lines in the start of file
   if above_idx < 0 then
-    if u.enable(opts.enable_start) then
+    if enable_sub('start') then
       if below_idx ~= end_nr then
         local col = u.get_line(below_idx):match('^%s*')
         u.del_lines(0, below_idx)
@@ -90,49 +107,66 @@ local function del_empty_lines()
   local indent1 = u.get_indent_level(line1)
   local indent2 = u.get_indent_level(cur_line)
   -- if indent2 == 0, i.e. cursor col is 1 then <c-u> will act as <bs>
-  local trigger_text = indent2 > 0 and indent2 - indent1 <= opts.trigger_indent_level.text
-  local loose_trigger_bracket = indent2 - indent1 <= opts.trigger_indent_level.bracket
+  local loose_trigger_bracket = indent2 - indent1 <= opts.trigger_indent_level
   local trigger_bracket = indent2 > 0 and loose_trigger_bracket
 
   -- inside brackets, all blanks are deleted
   if has_left and has_right then
-    if u.enable(opts.enable_bracket) and loose_trigger_bracket then
-      local line2 = u.get_line(below_idx):match('^%s*(.-)$')
-      u.del_lines(above_idx + 1, below_idx + 1)
-      u.set_line(above_idx, line1 .. line2)
-      u.set_cursor(above_idx + 1, vim.fn.strlen(line1))
-    else
-      u.feedkeys('<bs>')
-    end
-  -- multiple empty lines
-  elseif below_idx - above_idx > 2 then
-    if u.enable(opts.enable_multiline) then
-      u.set_line(above_idx, line1)
-      if empty_pre then
-        local col = #u.get_line(below_idx):match('^%s*')
-        if has_left then -- do not leave blanks
-          u.del_lines(above_idx + 1, below_idx)
-          u.set_cursor(above_idx + 2, col)
-        else
-          u.del_lines(above_idx + 1, below_idx - 1)
-          u.set_cursor(above_idx + 3, col)
-        end
+    if enable_sub('inside_brackets') then
+      if below_idx - above_idx > 2 then
+        u.del_lines(above_idx + 1, below_idx - 1)
+        u.set_line(above_idx + 1, left_line)
+        u.set_cursor(above_idx + 2, left_line)
+      elseif loose_trigger_bracket then
+        local line2 = u.get_line(below_idx):match('^%s*(.-)$')
+        u.del_lines(above_idx + 1, below_idx + 1)
+        u.set_line(above_idx, line1 .. line2)
+        u.set_cursor(above_idx + 1, vim.fn.strlen(line1))
       else
-        u.del_lines(above_idx + 1, below_idx)
-        u.set_cursor(above_idx + 1, line1)
-        u.feedkeys('<cr>')
+        u.feedkeys('<bs>')
       end
     else
       u.feedkeys('<bs>')
     end
-  -- one empty line
-  elseif u.enable(opts.enable_oneline) and not empty_pre then
-    u.set_line(above_idx, line1)
-    if left then
-      u.feedkeys(trigger_bracket and '<c-u><bs>' or '<bs>')
+  -- when there is a left bracket
+  elseif has_left then
+    if enable_sub('left_bracket') then
+      u.set_line(above_idx, line1)
+      if below_idx - above_idx > 1 and below_idx ~= end_nr then
+        local col = #u.get_line(below_idx):match('^%s*')
+        u.del_lines(above_idx + 1, below_idx)
+        u.set_cursor(above_idx + 2, col)
+      -- multiple empty lines at end of line
+      elseif below_idx - above_idx > 2 and below_idx == end_nr then
+        u.del_lines(above_idx + 1, below_idx - 1)
+        u.set_line(above_idx + 1, left_line)
+        u.set_cursor(above_idx + 2, left_line)
+      else
+        u.feedkeys(trigger_bracket and '<c-u><bs>' or '<bs>')
+      end
     else
-      u.feedkeys(trigger_text and '<c-u><bs>' or '<bs>')
+      u.feedkeys('<bs>')
     end
+  -- multiple empty lines, delete to one empty line
+  elseif below_idx - above_idx > 2 then
+    if enable_sub('text_multi_line') then
+      u.set_line(above_idx, line1)
+      if empty_pre then
+        local col = #u.get_line(below_idx):match('^%s*')
+        u.del_lines(above_idx + 1, below_idx - 1)
+        u.set_cursor(above_idx + 3, col)
+      elseif below_idx - above_idx > 3 then
+        u.del_lines(above_idx + 1, below_idx - 1)
+        u.set_line(above_idx + 1, left_line)
+        u.set_cursor(above_idx + 2, left_line)
+      else
+        u.feedkeys('<bs>')
+      end
+    else
+      u.feedkeys('<bs>')
+    end
+  elseif enable_sub('text_delete_to_prev_indent') then
+    delete_less_indent()
   else
     u.feedkeys('<bs>')
   end
