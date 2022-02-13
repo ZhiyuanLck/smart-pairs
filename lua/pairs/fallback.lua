@@ -12,7 +12,10 @@ function M.enter()
 end
 
 function M.space()
-  u.feedkeys('<space>')
+  local left_line, right_line = u.get_cursor_lr()
+  left_line = left_line .. ' '
+  u.set_line(0, left_line .. right_line)
+  u.set_cursor(0, left_line)
 end
 
 function M.delete()

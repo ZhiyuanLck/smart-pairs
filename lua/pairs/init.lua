@@ -174,6 +174,10 @@ function Pairs:setup(opts)
         end
       end
 
+      if not pair.opts.enable_smart_space then
+        pair.opts.enable_smart_space = pair.left ~= pair.right
+      end
+
       table.insert(ft_pairs, pair)
       self.lr[ft][pair.left] = pair
       self.rl[ft][pair.right] = pair

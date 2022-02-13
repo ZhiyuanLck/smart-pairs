@@ -117,6 +117,9 @@ parsed to make strategies.
 **`cross_line`**: boolean, whether the bracket can cross lines, default true for unbalanced pairs
 and false for balanced pairs.
 
+**`enable_smart_space`**: boolean, whether to enable smart space, default true for unbalanced pairs
+and false for balanced pairs.
+
 #### global options
 
 **`default_opts`**: global default values of pair options. The default values are
