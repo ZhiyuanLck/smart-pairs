@@ -4,36 +4,42 @@ local P = require('pairs')
 
 local function type_aux()
   local left_line, right_line = u.get_cursor_lr()
+  left_line = left_line:match('(.-)%s*$')
+  right_line = right_line:match('^%s*(.-)%s*$')
 
-  local bnl, bnr, has_right
+  -- blank number of left and right part
+  local has_left, has_right, feed_tab
   for _, pair in ipairs(P:get_pairs()) do
-    local left_blank = left_line:match(u.escape(pair.left) .. '(%s*)$')
-    local right_blank = right_line:match('^(%s*)' .. u.escape(pair.right))
-
-    if pair.opts.triplet then
-      has_right = right_line:match('^%s*' .. string.rep(u.escape(pair.right), 3))
-    else
-      has_right = pair.opts.cross_line and right_blank
-    end
-
-    if left_blank or right_blank then
-      bnl = left_blank and #left_blank or #left_line:match('%s*$')
-      bnr = right_blank and #right_blank or #right_line:match('^%s*')
+    local left_cross_line = pair.opts.cross_line and left_line:match(u.escape(pair.left) .. '$')
+    has_left = (pair.left == pair.right and
+      (
+        (pair.opts.triplet and left_line:match(string.rep(u.escape(pair.left), 3) .. '$'))
+        or left_cross_line
+      )) or (pair.left ~= pair.right and left_cross_line)
+    if has_left then
+      if pair.left == pair.right then
+        has_right = right_line:match('^' .. string.rep(u.escape(pair.right), 3)) ~= nil
+      else
+        has_right = right_line:match('^' .. u.escape(pair.right)) ~= nil
+      end
+      feed_tab = not pair.opts.triplet
       break
     end
   end
 
-  if not bnl and not bnr then
-    bnl = #left_line:match('%s*$')
-    bnr = #right_line:match('^%s*')
+  local linenr = vim.fn.line('.')
+  local indent = left_line:match('^%s*')
+
+  if has_left then
+    vim.api.nvim_set_current_line(left_line)
+    vim.fn.append(linenr, has_right and {indent, right_line} or indent .. right_line)
+    u.set_cursor(linenr + 1, indent)
+    if feed_tab then u.feedkeys('<tab>') end
+  else
+    vim.api.nvim_set_current_line(left_line .. right_line)
+    u.set_cursor(linenr, left_line)
+    u.feedkeys('<cr>')
   end
-
-  left_line = bnl == 0 and left_line or left_line:sub(1, #left_line - bnl)
-  right_line = bnr == 0 and right_line or right_line:sub(bnr + 1)
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  u.set_cursor(0, left_line)
-
-  u.feedkeys(has_right and "<cr><esc>O" or "<cr>")
 end
 
 function M.type()
