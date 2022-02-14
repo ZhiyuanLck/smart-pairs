@@ -89,7 +89,9 @@ local function del_empty_lines()
   -- empty lines in the start of file
   if above_idx < 0 then
     if enable_sub('start') then
-      if below_idx ~= end_nr then
+      if empty_pre and linenr == 1 then
+        u.feedkeys('<bs>')
+      elseif below_idx ~= end_nr then
         local col = u.get_line(below_idx):match('^%s*')
         u.del_lines(0, below_idx)
         u.set_cursor(1, col)
