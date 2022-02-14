@@ -22,6 +22,9 @@ local Pairs = {
     },
     markdown = {
       {'`', '`', {triplet = true}},
+    },
+    tex = {
+      {'$', '$'}
     }
   },
   default_opts = {
