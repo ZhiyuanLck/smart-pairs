@@ -67,6 +67,16 @@ local Pairs = {
     enable_cond     = true,
     enable_fallback = fb.enter,
   },
+  autojump_strategy = {
+    unbalanced = 'right', -- all, right, loose_right, none
+  },
+  mapping = {
+    jump_left_in_any   = '<m-[>',
+    jump_right_in_any  = '<m-]>',
+    jump_left_out_any  = '<m-{>',
+    jump_right_out_any = '<m-}>',
+  },
+  max_search_lines = 100,
 }
 
 Pairs.__index = Pairs
@@ -103,6 +113,18 @@ function Pairs:set_keymap()
   if u.enable(self.enter.enable_mapping) then
     map('<cr>', [[<cmd>lua require('pairs.enter').type()<cr>]])
   end
+  local map_jump = function(left, out)
+    local direction = left and 'left' or 'right'
+    local side = out and 'out' or 'in'
+    local key = self.mapping[fmt('jump_%s_%s_any', direction, side)]
+    if not key then return false end
+    out = out and 'true' or 'false'
+    map(key, fmt([[<cmd>lua require('pairs.bracket').jump_%s{out = %s}<cr>]], direction, out))
+  end
+  map_jump(true, true)
+  map_jump(true, false)
+  map_jump(false, false)
+  map_jump(false, true)
   self:set_buf_keymap()
 end
 
@@ -140,6 +162,7 @@ function Pairs:setup(opts)
   u.merge(self.delete, opts.delete)
   u.merge(self.space, opts.space)
   u.merge(self.enter, opts.enter)
+  u.merge(self.autojump_strategy, opts.autojump_strategy)
 
   for ft, pairs in pairs(opts.pairs or {}) do
     self.pairs[ft] = pairs

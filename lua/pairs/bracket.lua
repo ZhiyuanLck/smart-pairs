@@ -1,4 +1,5 @@
 local M = {}
+local fmt = string.format
 local u = require('pairs.utils')
 local P = require('pairs')
 
@@ -27,26 +28,42 @@ end
 local function type_right_neq(left, right)
   local left_line, right_line = u.get_cursor_lr()
 
+  local do_nothing = function()
+    left_line = left_line .. right
+    vim.api.nvim_set_current_line(left_line .. right_line)
+    u.set_cursor(0, left_line)
+  end
+
   local ignore_pre = P:ignore_pre(left_line, left)
   if ignore_pre then
-    u.feedkeys(right)
+    do_nothing()
     return
   end
 
   local lc, rc = P:get_count(left_line, right_line, left, right)
-  local pos = vim.api.nvim_win_get_cursor(0)
   -- lots of left brackets more than right, we need the right one
   -- or the first right bracket is to be typeset after revoming the counterbalances on the right
   if lc > rc or rc == 0 then
-    left_line = left_line .. right
-    pos[2] = vim.fn.strlen(left_line)
-  -- now we have at least one right bracket on the right and then jump to it
-  else
-    local _, end_idx = right_line:find(right)
-    pos[2] = pos[2] + vim.fn.strlen(right_line:sub(1, end_idx))
+    do_nothing()
+    return
   end
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  vim.api.nvim_win_set_cursor(0, pos)
+
+  local strategy = P.autojump_strategy.unbalanced
+  -- always do not jump
+  if not strategy or strategy == 'none' or
+    (strategy ~= 'all' and strategy ~= 'right' and strategy ~= 'loose_right') then
+    do_nothing()
+    return
+  end
+
+  right = u.escape(right)
+  if (strategy == 'loose_right' and not right_line:match('^%s*' .. right)) or
+    (strategy == 'right' and not right_line:match('^' .. right)) then
+    do_nothing()
+    return
+  end
+
+  u.set_cursor(0, left_line .. right_line:match('^.-' .. right))
 end
 
 -- action when two brackets are equal
@@ -136,6 +153,96 @@ function M.type_right(right)
     type_right_neq(left, right)
   end
   return ''
+end
+
+-- test whether line contain key and return match cursor col
+-- @param line string
+-- @param line_idx number: 0-based index of line
+-- @param format string: detail search pattern
+-- @param key string: key to be searched
+-- @param left_line string: left line to be concated to get the cursor col
+local function match_col(line, format, key, left_line)
+  local m = line:match(fmt(format, u.escape(key)))
+  if not m then return end
+  m = left_line and left_line .. m or m
+  return vim.fn.strlen(m)
+end
+
+-- jump to the key
+-- @param opts table
+-- @field key string: search key
+-- @field out boolean: if jump outside the key
+function M.jump_left(opts)
+  opts = opts or {}
+  local line_idx = vim.fn.line('.') - 1
+  local cur = line_idx
+  local format = opts.out and '^(.*)%s.-$' or '^(.*%s).-$'
+
+  while (cur >= 0 and line_idx - cur <= P.max_search_lines) do
+    local line = cur == line_idx and u.get_cursor_l() or u.get_line(cur)
+    local trim = function(key)
+      if cur ~= line_idx or opts.out then return line end
+      local m = line:match(fmt('^(.*)%s$', u.escape(key)))
+      return m or line
+    end
+    if opts.key then
+      local tmp_line = trim(opts.key)
+      local col = match_col(tmp_line, format, opts.key)
+      if col then u.set_cursor(cur + 1, col) return end
+    else
+      local max
+      for _, pair in ipairs(P:get_pairs()) do
+        local tmp_line = trim(pair.left)
+        local col = match_col(tmp_line, format, pair.left)
+        if col and (not max or col > max) then max = col end
+      end
+      if max then u.set_cursor(cur + 1, max) end
+    end
+    cur = cur - 1
+  end
+end
+
+-- jump to the key
+-- @param opts table
+-- @field key string: search key
+-- @field out boolean: if jump outside the key
+function M.jump_right(opts)
+  opts = opts or {}
+  local line_idx = vim.fn.line('.') - 1
+  local cur = line_idx
+  local format = opts.out and '^(.-%s)' or '^(.-)%s'
+  local end_nr = vim.api.nvim_buf_line_count(0)
+
+  while (cur < end_nr and cur - line_idx <= P.max_search_lines) do
+    local line, left_line
+    if cur == line_idx then
+      left_line, line = u.get_cursor_lr()
+    else
+      line = u.get_line(cur)
+    end
+
+    local trim = function(key)
+      if cur ~= line_idx or opts.out then return line, left_line end
+      local m = line:match(fmt('^%s(.*)$', u.escape(key)))
+      return m and m or line, m and left_line .. key or left_line
+    end
+
+    if opts.key then
+      local tmp_line, tmp_left_line = trim(opts.key)
+      local col = match_col(tmp_line, format, opts.key, tmp_left_line)
+      if col then u.set_cursor(cur + 1, col) return end
+    else
+      local min
+      for _, pair in ipairs(P:get_pairs()) do
+        local tmp_line, tmp_left_line = trim(pair.right)
+        -- print(pair.right, line, left_line, tmp_line, tmp_left_line)
+        local col = match_col(tmp_line, format, pair.right, tmp_left_line)
+        if col and (not min or col < min) then min = col end
+      end
+      if min then u.set_cursor(cur + 1, min) return end
+    end
+    cur = cur + 1
+  end
 end
 
 return M

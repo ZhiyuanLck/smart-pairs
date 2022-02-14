@@ -67,6 +67,13 @@ function M.get_cursor_l()
   return vim.fn.strpart(line, 0, col)
 end
 
+-- @return right part of line separated by cursor
+function M.get_cursor_r()
+  local col = vim.fn.col('.') - 1
+  local line = vim.api.nvim_get_current_line()
+  return vim.fn.strpart(line, col)
+end
+
 -- @return left and right part of line separated by cursor
 function M.get_cursor_lr()
   local col = vim.fn.col('.') - 1

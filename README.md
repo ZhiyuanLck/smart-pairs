@@ -92,6 +92,16 @@ local default_opts = {
     enable_cond     = true,
     enable_fallback = fb.enter,
   },
+  autojump_strategy = {
+    unbalanced = 'right', -- all, right, loose_right, none
+  },
+  mapping = {
+    jump_left_in_any   = '<m-[>',
+    jump_right_in_any  = '<m-]>',
+    jump_left_out_any  = '<m-{>',
+    jump_right_out_any = '<m-}>',
+  },
+  max_search_lines = 100,
 }
 ```
 
@@ -292,6 +302,38 @@ current line, default `true`.
 
 **`delete.current_line.enable_fallback`**: function, if `delete.current_line.enable_cond` is
 evaluated to `false`, then the fallback function will be called, default `require('pairs.utils').delete`.
+
+**`autojump_strategy.unbalanced`**: string, strategy applied to autojump, default `'right'`. All
+values are
+
+- `'all'`: always enable smart jump when you type a right bracket, but it may be not ideal when
+  there is a cross-line pair.
+- `'right'`: enable smart jump only when there is a right bracket next to the cursor, such as `(|)`.
+- `'loose_right'`: enable smart jump only when there is a right bracket (with prefix spaces) next to
+  the cursor, such as`(|␣)`.
+- `'none' or nil`: forbid smart jump, always type the right bracket rather than jump.
+
+**`max_search_lines`**: number, max lines to search when needed, default 100.
+
+**`mapping`**: key mappings
+
+- `jump_left_in_any`: jump to the right side of left bracket on the left/above of the cursor,
+  default `<m-[>`.
+- `jump_right_in_any`: jump to the left side of right bracket on the right/below of the cursor,
+  default `<m-]>`.
+- `jump_left_out_any`: jump to the left side of left bracket on the left/above of the cursor,
+  default `<m-{>`.
+- `jump_right_out_any`: jump to the right side of right bracket on the right/below of the cursor,
+  default `<m-}>`.
+
+In fact, you can jump to any custom search key by `require('pairs.bracket').jump_left(opts)` and
+`require('pairs.bracket').jump_right(opts)`, where
+```lua
+opts = {
+  key = string, key to be searched
+  out = boolean, jump to the outside or inside of the key
+}
+```
 
 ## Work with Other Plugin
 
