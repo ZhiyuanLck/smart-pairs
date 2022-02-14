@@ -24,7 +24,7 @@ local Pairs = {
       {'`', '`', {triplet = true}},
     },
     tex = {
-      {'$', '$'}
+      {'$', '$', {cross_line = true}}
     }
   },
   default_opts = {

@@ -17,10 +17,10 @@ local function type_aux()
         or left_cross_line
       )) or (pair.left ~= pair.right and left_cross_line)
     if has_left then
-      if pair.left == pair.right then
-        has_right = right_line:match('^' .. string.rep(u.escape(pair.right), 3)) ~= nil
-      else
+      if pair.left ~= pair.right or not pair.triplet then
         has_right = right_line:match('^' .. u.escape(pair.right)) ~= nil
+      else
+        has_right = right_line:match('^' .. string.rep(u.escape(pair.right), 3)) ~= nil
       end
       feed_tab = not pair.opts.triplet
       break
