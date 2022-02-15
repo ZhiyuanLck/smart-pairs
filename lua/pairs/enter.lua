@@ -8,33 +8,43 @@ local function type_aux()
   right_line = right_line:match('^%s*(.-)%s*$')
 
   -- blank number of left and right part
-  local has_left, has_right, feed_tab
+  local has_left, has_right, has_indent
+  local loose_match
   for _, pair in ipairs(P:get_pairs()) do
-    local left_cross_line = pair.opts.cross_line and left_line:match(u.escape(pair.left) .. '$')
-    has_left = (pair.left == pair.right and
-      (
-        (pair.opts.triplet and left_line:match(string.rep(u.escape(pair.left), 3) .. '$'))
-        or left_cross_line
-      )) or (pair.left ~= pair.right and left_cross_line)
-    if has_left then
-      if pair.left ~= pair.right or not pair.triplet then
-        has_right = right_line:match('^' .. u.escape(pair.right)) ~= nil
-      else
-        has_right = right_line:match('^' .. string.rep(u.escape(pair.right), 3)) ~= nil
+    if not pair.opts.cross_line and not pair.opts.triplet then goto continue end
+    local _left_line = P:clean(left_line, pair.left, false)
+
+    local check = function(loose)
+      local _end = loose and '.-$' or '$'
+      local left_cross_line = not pair.balanced and _left_line:match(u.escape(pair.left) .. _end)
+      local triplet = pair.opts.triplet and _left_line:match(string.rep(u.escape(pair.left), 3) .. _end)
+      has_left = left_cross_line or triplet
+      if has_left then
+        if pair.triplet then
+          has_right = right_line:match('^' .. string.rep(u.escape(pair.right), 3)) ~= nil
+        else
+          has_right = right_line:match('^' .. u.escape(pair.right)) ~= nil
+        end
+        has_indent = not pair.opts.triplet
       end
-      feed_tab = not pair.opts.triplet
-      break
+      loose_match = loose
+      return has_left
     end
+
+    if check(false) or check(true) then break end
+    ::continue::
   end
 
   local linenr = vim.fn.line('.')
 
   if has_left then
     local indent = left_line:match('^%s*')
-    right_line = indent .. right_line
-    if feed_tab then
-      indent = indent .. (vim.bo.et and string.rep(' ', vim.bo.sw) or '\t')
+    if not loose_match then right_line = indent .. right_line end
+    if has_indent then
+      indent = indent .. P:get_indent()
     end
+    if loose_match then right_line = indent .. right_line end
+
     vim.api.nvim_set_current_line(left_line)
     vim.fn.append(linenr, has_right and {indent, right_line} or right_line)
     u.set_cursor(linenr + 1, indent)

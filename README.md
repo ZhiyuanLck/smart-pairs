@@ -27,7 +27,8 @@ Setup the options by
 require('pairs'):setup(opts)
 ```
 
-Default options are
+<details>
+<summary><b>Default options</b></summary>
 
 ```lua
 local default_opts = {
@@ -91,6 +92,10 @@ local default_opts = {
     enable_mapping  = true,
     enable_cond     = true,
     enable_fallback = fb.enter,
+    indent = {
+      ['*'] = 1,
+      python = 2,
+    }
   },
   autojump_strategy = {
     unbalanced = 'right', -- all, right, loose_right, none
@@ -104,6 +109,8 @@ local default_opts = {
   max_search_lines = 100,
 }
 ```
+
+</details>
 
 ### Options
 
@@ -173,6 +180,9 @@ fallback function will be called, default `require('pairs.utils').enter`.
 **`enter.before_hook`**: hook function which is called before smart enter is triggered.
 
 **`enter.after_hook`**: hook function which is called after smart enter is triggered.
+
+**`enter.indent`**: indent table, when smart enter is enabled, extra indent will be added according
+the value of this option.
 
 **`delete.enable_mapping`**: boolean or function, map `<bs>` to enable smart deletion, if set to
 `false`, `<bs>` will not be mapped, default `true`.
@@ -426,12 +436,23 @@ press <bs>, _ denotes <space>
 {
   |
 }
-
+-----------------
+{abc|}
+=================
+{abc
+  |
+}
+-----------------
+{ab|c}
+=================
+{abc
+  |c}
+-----------------
 '|'
 =================
 '
 |'
-
+-----------------
 >>> in python
 '''|'''
 =================

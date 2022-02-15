@@ -66,6 +66,10 @@ local Pairs = {
     enable_mapping  = true,
     enable_cond     = true,
     enable_fallback = fb.enter,
+    indent = {
+      ['*'] = 1,
+      python = 2,
+    }
   },
   autojump_strategy = {
     unbalanced = 'right', -- all, right, loose_right, none
@@ -192,11 +196,7 @@ function Pairs:setup(opts)
       end
 
       if not pair.opts.cross_line then
-        if pair.left == pair.right then
-          pair.opts.cross_line = pair.opts.triplet
-        else
-          pair.opts.cross_line = true
-        end
+        pair.opts.cross_line = pair.left ~= pair.right
       end
 
       if not pair.opts.enable_smart_space then
@@ -299,8 +299,9 @@ end
 -- remove escaped brackets and ignore pattern
 -- @param line string: line to be processed
 -- @param left string: left bracket
+-- @param respect_triplet boolean: whether to remove possible triplet pair, default true
 -- @return string: clean line
-function Pairs:clean(line, left)
+function Pairs:clean(line, left, respect_triplet)
   -- ignore \\
   line = line:gsub('\\\\', '')
   -- ignore escaped pair
@@ -317,8 +318,10 @@ function Pairs:clean(line, left)
   -- ignore string
   line = line:gsub("\\'", ''):gsub('\\"', '')
   -- remove possible triplet
-  line = line:gsub('"""', ''):gsub("'''", '')
-  line = line:gsub("'.-'", ''):gsub('".-"', '')
+  if respect_triplet == nil or respect_triplet then
+    line = line:gsub('"""', ''):gsub("'''", '')
+    line = line:gsub("'.-'", ''):gsub('".-"', '')
+  end
   return line
 end
 
@@ -367,6 +370,13 @@ function Pairs:match_count(line, bracket)
   local n = 0
   for _ in line:gmatch(u.escape(bracket)) do n = n + 1 end
   return n
+end
+
+function Pairs:get_indent()
+  local ft = vim.bo.ft
+  local level = self.enter.indent[ft] or self.enter.indent['*'] or 1
+  local one = vim.bo.et and string.rep(' ', vim.bo.sw) or '\t'
+  return string.rep(one, level)
 end
 
 return Pairs
