@@ -54,7 +54,7 @@ local function del_empty_lines()
   local left, has_left
   if line then
     for _, pair in ipairs(P:get_pairs()) do
-      left = line:match(fmt('(%s)%%s*$', u.escape(pair.left)))
+      left = P:clean(line, pair.left):match(fmt('(%s)%%s*$', u.escape(pair.left)))
       if left then
         has_left = pair.opts.cross_line
         break
@@ -76,7 +76,7 @@ local function del_empty_lines()
 
   local has_right
   if has_left and line then
-    has_right = line:match(fmt('^%%s*(%s)', u.escape(P:get_right(left))))
+    has_right = P:clean(line, left):match(fmt('^%%s*(%s)', u.escape(P:get_right(left))))
   end
 
   -- 0-indexed line index of first nonempty line when searching below
