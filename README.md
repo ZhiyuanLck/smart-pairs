@@ -112,7 +112,8 @@ global pairs and options.
 
 A `pair` is specified by `{ left, right, opts (optional) }`
 
-#### pair options
+<details>
+<summary>**pair options**</summary>
 
 **`ignore_pre`**: vim regex pattern, brackets after the pattern keep its original meaning.
 
@@ -130,7 +131,10 @@ and false for balanced pairs.
 **`enable_smart_space`**: boolean, whether to enable smart space, default true for unbalanced pairs
 and false for balanced pairs.
 
-#### global options
+</details>
+
+<details>
+<summary>**global options**</summary>
 
 **`default_opts`**: global default values of pair options. The default values are
 
@@ -338,6 +342,8 @@ opts = {
   out = boolean, jump to the outside or inside of the key
 }
 ```
+
+</details>
 
 ## Work with Other Plugin
 
