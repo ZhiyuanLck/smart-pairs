@@ -386,7 +386,7 @@ press )
 |(ab)   --> |)(ab)   - type right
 (|      --> (|)      - complete right
 (|)     --> ()|      - jump right when 'autojump_strategy.unbalanced' is not 'none'
-(| )     --> ()|     - jump right when 'autojump_strategy.unbalanced' is 'all' or 'loose_right'
+(| )    --> ()|      - jump right when 'autojump_strategy.unbalanced' is 'all' or 'loose_right'
 (a|b)   --> (ab)|    - jump right when 'autojump_strategy.unbalanced' is 'all'
 |(ab))  --> (ab)|)   - jump right when 'autojump_strategy.unbalanced' is 'all'
 ('\(|') --> ('\(')|  - jump right when 'autojump_strategy.unbalanced' is 'all'
