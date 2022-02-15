@@ -56,14 +56,15 @@ local function type_right_neq(left, right)
     return
   end
 
-  right = u.escape(right)
-  if (strategy == 'loose_right' and not right_line:match('^%s*' .. right)) or
-    (strategy == 'right' and not right_line:match('^' .. right)) then
+  -- avoid do_nothing use the escaped right
+  local _right = u.escape(right)
+  if (strategy == 'loose_right' and not right_line:match('^%s*' .. _right)) or
+    (strategy == 'right' and not right_line:match('^' .. _right)) then
     do_nothing()
     return
   end
 
-  u.set_cursor(0, left_line .. right_line:match('^.-' .. right))
+  u.set_cursor(0, left_line .. right_line:match('^.-' .. _right))
 end
 
 -- action when two brackets are equal
