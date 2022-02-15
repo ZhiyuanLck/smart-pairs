@@ -178,6 +178,7 @@ end
 local function del_current_line()
   local left_line, right_line = u.get_cursor_lr()
 
+  -- number of chars to be delete on the lef and right
   local del_l, del_r
   for _, pair in ipairs(P:get_pairs()) do
     local left_blank = left_line:match(u.escape(pair.left) .. '(%s*)$')
@@ -194,7 +195,10 @@ local function del_current_line()
     elseif right_blank then -- del_l == 0, del bracket
       local lc, rc = P:get_count(left_line, right_line, pair.left, pair.right)
       del_l = 1
-      del_r = lc > rc and del_r or del_r + #right_part
+      -- respect balanced pair
+      if (pair.opts.balanced and lc % 2 == 1 and rc % 2 == 1) or (not pair.opts.balanced and lc <= rc) then
+        del_r = del_r + #right_part
+      end
     else -- del_l == 0, del single bracket
       del_l = 1
       del_r = del_r - 1
