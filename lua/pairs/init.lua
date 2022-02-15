@@ -12,9 +12,9 @@ local Pairs = {
       {'"', '"'},
     },
     lua = {
-      {'(', ')', {ignore = {'%(', '%)', '\\(', '\\)', '%%'}}},
-      {'[', ']', {ignore = {'%[', '%]', '\\[', '\\]', '%%'}}},
-      {'{', '}', {ignore = {'%{', '%}', '\\{', '\\}', '%%'}}},
+      {'(', ')', {ignore = {'%(', '%)', '%%'}}},
+      {'[', ']', {ignore = {'%[', '%]', '%%'}}},
+      {'{', '}', {ignore = {'%{', '%}', '%%'}}},
     },
     python = {
       {"'", "'", {triplet = true}},
@@ -301,16 +301,24 @@ end
 -- @param left string: left bracket
 -- @return string: clean line
 function Pairs:clean(line, left)
+  -- ignore \\
   line = line:gsub('\\\\', '')
+  -- ignore escaped pair
   line = line:gsub('\\' .. u.escape(left), '')
   local right = self:get_right(left)
   if right ~= left then
     line = line:gsub('\\' .. u.escape(right), '')
   end
+  -- ignore extra pattern
   local ignore = self:get_ignore(left)
   for _, pattern in ipairs(ignore) do
     line = line:gsub(u.escape(pattern), '')
   end
+  -- ignore string
+  line = line:gsub("\\'", ''):gsub('\\"', '')
+  -- remove possible triplet
+  line = line:gsub('"""', ''):gsub("'''", '')
+  line = line:gsub("'.-'", ''):gsub('".-"', '')
   return line
 end
 

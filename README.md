@@ -120,7 +120,7 @@ A `pair` is specified by `{ left, right, opts (optional) }`
 completed when left bracket is typeset before the pattern except the right bracket.
 
 **`ignore`**: string or string list, these patterns will be removed before the current line is
-parsed to make strategies.
+parsed to make strategies. Note that escaped pair has been removed by default.
 
 **`triplet`**: boolean, only for balanced brackets, expand the triplet brackets, default false.
 
