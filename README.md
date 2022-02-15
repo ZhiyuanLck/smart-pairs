@@ -352,40 +352,41 @@ Typeset left bracket
 
 ```
 press (
-|    --> (|)
-|)   --> (|)
-|')' --> (|)')'
-|a   --> (|a
-|()) --> (|())
-\|   --> \(|
-\\|  --> \\(|)
-'%|' --> '%(' in lua
+|    --> (|)    - type left and complete the right
+|)   --> (|)    - complete left
+|')' --> (|)')' - ignore strings
+|a   --> (|a    - not complete the right before a word
+|()) --> (|())  - respect the validity of current line
+\|   --> \(|    - not complete the right after an escape char
+\\|  --> \\(|)  - work well after double backslash
+'%|' --> '%('   - not complete the right after '%' in lua (see pair option 'ignore_pre')
 ```
 
 Typeset right bracket
 
 ```
 press )
-|       --> |)
-(|      --> (|)
-(|)     --> ()|
-(a|b)   --> (ab)|
-|(ab)   --> |)(ab)
-|(ab))  --> (ab)|)
-('\(|') --> ('\(')|
-('%(|') --> ('%(')| in lua
+|       --> |)       - type right
+|(ab)   --> |)(ab)   - type right
+(|      --> (|)      - complete right
+(|)     --> ()|      - jump right when 'autojump_strategy.unbalanced' is not 'none'
+(| )     --> ()|     - jump right when 'autojump_strategy.unbalanced' is 'all' or 'loose_right'
+(a|b)   --> (ab)|    - jump right when 'autojump_strategy.unbalanced' is 'all'
+|(ab))  --> (ab)|)   - jump right when 'autojump_strategy.unbalanced' is 'all'
+('\(|') --> ('\(')|  - jump right when 'autojump_strategy.unbalanced' is 'all'
+('\(|') --> ('\()|') - type right when 'autojump_strategy.unbalanced' is not 'all'
 ```
 
 ### Typeset Balanced Pairs
 
 ```
 press "
-|     --> "|"
-"ab|  --> "ab|"
-"a|b" --> "a"|"b"
-"ab|" --> "ab"|
-"'"|  --> "'""|"
-""|   --> """|""" in python
+|     --> "|"     - type two
+"ab|  --> "ab|"   - complete anoter
+"a|b" --> "a"|"b" - type two in middle
+"ab|" --> "ab"|   - jump right if next to the right one
+'"'|  --> '"'"|"  - ignore string and type two
+""|   --> """|""" - complete triplet in python
 ```
 
 ### Smart Space
@@ -399,16 +400,16 @@ press <space>, _ denotes <space>
 
 ```
 press <bs>, _ denotes <space>
-{|}     --> |
-{{|}    --> {|}
-{|}}    --> |}
-{_|_}   --> {}
-{_|__}  --> {_|_}
-{__|_}  --> {_|_}
-{__|}   --> {|}
-{__|ab  --> {|ab
-{__|_ab --> {|ab
-{|___ab --> |_ab
+{{|}    --> {|}   - delete left
+{|}     --> |     - delete two
+{|}}    --> |}    - delete two
+{_|__}  --> {_|_} - leave two spaces
+{__|_}  --> {_|_} - leave two spaces
+{_|_}   --> {}    - delete all blanks
+{__|}   --> {|}   - delete all blanks
+{__|ab  --> {|ab  - delete all blanks
+{__|_ab --> {|ab  - delete all blanks
+{|___ab --> |_ab  - delete left and leave a space
 ```
 
 ### Smart Enter
