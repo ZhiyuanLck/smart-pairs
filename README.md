@@ -113,7 +113,7 @@ global pairs and options.
 A `pair` is specified by `{ left, right, opts (optional) }`
 
 <details>
-<summary>**pair options**</summary>
+<summary><b>pair options</b></summary>
 
 **`ignore_pre`**: vim regex pattern, brackets after the pattern keep its original meaning.
 
@@ -134,7 +134,7 @@ and false for balanced pairs.
 </details>
 
 <details>
-<summary>**global options**</summary>
+<summary><b>global options</b></summary>
 
 **`default_opts`**: global default values of pair options. The default values are
 
