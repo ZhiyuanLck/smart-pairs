@@ -31,6 +31,7 @@ require('pairs'):setup(opts)
 <summary><b>Default options</b></summary>
 
 ```lua
+local fb = require('pairs.fallback')
 local default_opts = {
   pairs = {
     ['*'] = {
