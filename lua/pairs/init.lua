@@ -72,9 +72,9 @@ local Pairs = {
   },
   mapping = {
     jump_left_in_any   = '<m-[>',
-    jump_right_in_any  = '<m-]>',
+    jump_right_out_any = '<m-]>',
     jump_left_out_any  = '<m-{>',
-    jump_right_out_any = '<m-}>',
+    jump_right_in_any  = '<m-}>',
   },
   max_search_lines = 100,
 }

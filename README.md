@@ -319,12 +319,12 @@ values are
 
 - `jump_left_in_any`: jump to the right side of left bracket on the left/above of the cursor,
   default `<m-[>`.
-- `jump_right_in_any`: jump to the left side of right bracket on the right/below of the cursor,
+- `jump_right_out_any`: jump to the right side of right bracket on the right/below of the cursor,
   default `<m-]>`.
+- `jump_right_in_any`: jump to the left side of right bracket on the right/below of the cursor,
+  default `<m-}>`.
 - `jump_left_out_any`: jump to the left side of left bracket on the left/above of the cursor,
   default `<m-{>`.
-- `jump_right_out_any`: jump to the right side of right bracket on the right/below of the cursor,
-  default `<m-}>`.
 
 In fact, you can jump to any custom search key by `require('pairs.bracket').jump_left(opts)` and
 `require('pairs.bracket').jump_right(opts)`, where
