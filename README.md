@@ -41,9 +41,9 @@ local default_opts = {
       {'"', '"'},
     },
     lua = {
-      {'(', ')', {ignore = {'%(', '%)', '\\(', '\\)', '%%'}}},
-      {'[', ']', {ignore = {'%[', '%]', '\\[', '\\]', '%%'}}},
-      {'{', '}', {ignore = {'%{', '%}', '\\{', '\\}', '%%'}}},
+      {'(', ')', {ignore = {'%(', '%)', '%%'}}},
+      {'[', ']', {ignore = {'%[', '%]', '%%'}}},
+      {'{', '}', {ignore = {'%{', '%}', '%%'}}},
     },
     python = {
       {"'", "'", {triplet = true}},
@@ -51,6 +51,9 @@ local default_opts = {
     },
     markdown = {
       {'`', '`', {triplet = true}},
+    },
+    tex = {
+      {'$', '$', {cross_line = true}}
     }
   },
   default_opts = {
@@ -102,9 +105,9 @@ local default_opts = {
   },
   mapping = {
     jump_left_in_any   = '<m-[>',
-    jump_right_in_any  = '<m-]>',
+    jump_right_out_any = '<m-]>',
     jump_left_out_any  = '<m-{>',
-    jump_right_out_any = '<m-}>',
+    jump_right_in_any  = '<m-}>',
   },
   max_search_lines = 100,
 }
