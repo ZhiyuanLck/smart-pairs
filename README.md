@@ -192,10 +192,12 @@ to `false`, then the fallback function will be called, default `require('pairs.u
 default `true`.
 
 ```
+_ denotes <space>
+
 >>> start of file
 >>> empty line
 >>> empty line
-␣␣|
+__|
 text
 =================
 >>> start of file
@@ -205,31 +207,33 @@ text
 >>> start of file
 >>> empty line
 >>> empty line
-␣␣|text
+__|text
 =================
 >>> start of file
-␣␣|text
+__|text
 ```
 
 **`delete.empty_line.enable_sub.inside_brackets`**: enable smart deletion of blanks between
 brackets, default `true`.
 
 ```
+_ denotes <space>
+
 First deletion will delete all but current empty line
 =================
 {
 
-␣␣␣␣|
+____|
 }
 
 Second deletion will delete a tab
 =================
 {
-␣␣␣␣|
+____|
 }
 =================
 {
-␣␣|
+__|
 }
 
 Now the relative indent level is 1, smart deletion is triggered
@@ -243,10 +247,10 @@ left bracket is detected, default `true`.
 ```
 {
 
-␣␣|text
+  |text
 =================
 {
-␣␣|text
+  |text
 =================
 {|text
 ```
@@ -310,7 +314,7 @@ values are
   there is a cross-line pair.
 - `'right'`: enable smart jump only when there is a right bracket next to the cursor, such as `(|)`.
 - `'loose_right'`: enable smart jump only when there is a right bracket (with prefix spaces) next to
-  the cursor, such as`(|␣)`.
+  the cursor, such as`(|_)`.
 - `'none' or nil`: forbid smart jump, always type the right bracket rather than jump.
 
 **`max_search_lines`**: number, max lines to search when needed, default 100.
@@ -387,24 +391,24 @@ press "
 ### Smart Space
 
 ```
-press <space>
-{|} --> {␣|␣}
+press <space>, _ denotes <space>
+{|} --> {_|_}
 ```
 
 ### Smart Deletion
 
 ```
-press <bs>
+press <bs>, _ denotes <space>
 {|}     --> |
 {{|}    --> {|}
 {|}}    --> |}
-{␣|␣}   --> {}
-{␣|␣␣}  --> {␣|␣}
-{␣␣|␣}  --> {␣|␣}
-{␣␣|}   --> {|}
-{␣␣|ab  --> {|ab
-{␣␣|␣ab --> {|ab
-{|␣␣␣ab --> |␣ab
+{_|_}   --> {}
+{_|__}  --> {_|_}
+{__|_}  --> {_|_}
+{__|}   --> {|}
+{__|ab  --> {|ab
+{__|_ab --> {|ab
+{|___ab --> |_ab
 ```
 
 ### Smart Enter
@@ -413,7 +417,7 @@ press <bs>
 {|}
 =================
 {
-␣␣|
+  |
 }
 
 '|'
