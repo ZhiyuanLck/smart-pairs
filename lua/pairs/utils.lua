@@ -108,7 +108,7 @@ function M.count(str, left, right, remove)
       n = n + 1
       cur = cur + #left
     elseif str:sub(cur, cur + rn - 1) == right then
-      n = n > 0 and n - 1 or n
+      n = n - 1
       cur = cur + #right
     else
       if remove then table.insert(line, str:sub(cur, cur)) end

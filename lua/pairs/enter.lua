@@ -7,9 +7,10 @@ local P = require('pairs')
 local function search_up(p)
   local cur = vim.fn.line('.') - 1
   local line_idx = cur
+  local ctn = {}
   while (cur >= 0 and line_idx - cur <= P.max_search_lines) do
     local line = cur == line_idx and u.get_cursor_l() or u.get_line(cur)
-    local pair = P:has_left(line, p)
+    local pair = P:has_left(line, ctn, p)
     if pair then
       return {indent = u.get_indent(line), has_indent = not pair.opts.triplet, has_left = true, pair = pair}
     end

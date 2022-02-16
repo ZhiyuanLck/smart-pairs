@@ -342,24 +342,28 @@ function Pairs:clean_all(line)
   return line
 end
 
--- check if line has extra left bracket
--- @param line stirng: line to be searched
--- @param right: specified pair
-function Pairs:has_left(line, pair)
-  if not line then return false end
+-- check if line has extra left bracket by counting the number of left brackets in line
+-- @param line string: line to be counted
+-- @param ctn table: counter table
+-- @param pair table: pair obj
+function Pairs:has_left(line, ctn, pair)
   local _line = self:clean_all(line)
-  local _has_left = function(p)
-    return (p.opts.triplet and u.match_count(self:clean(line, p.left, false), u.triplet(p.left)) % 2 == 1) or
-      (p.opts.cross_line and u.count(_line, p.left, p.right) > 0)
-  end
-  if pair then
-    if _has_left(pair) then return pair end
-  else
-    for _, _pair in ipairs(self:get_pairs()) do
-      if _has_left(_pair) then return _pair end
+  ctn = ctn or {}
+  local _count = function(p)
+    ctn[p.left] = ctn[p.left] or 0
+    if p.opts.triplet then
+      ctn[p.left] = ctn[p.left] + u.match_count(self:clean(line, p.left, false), u.triplet(p.left))
+      return ctn[p.left] % 2 == 1
+    elseif p.opts.cross_line then
+      ctn[p.left] = ctn[p.left] +  u.count(_line, p.left, p.right)
+      return ctn[p.left] > 0
     end
+    return false
   end
-  return false
+  if pair and _count(pair) then return pair end
+  for _, _pair in ipairs(self:get_pairs()) do
+    if _count(_pair) then return _pair end
+  end
 end
 
 -- check if line has right bracket at start

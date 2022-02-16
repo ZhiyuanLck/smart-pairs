@@ -43,7 +43,7 @@ local function type_right_neq(left, right)
   local lc, rc = P:get_count(left_line, right_line, left, right)
   -- lots of left brackets more than right, we need the right one
   -- or the first right bracket is to be typeset after revoming the counterbalances on the right
-  if lc > rc or rc == 0 then
+  if lc > rc then
     do_nothing()
     return
   end
