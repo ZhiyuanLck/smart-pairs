@@ -96,10 +96,13 @@ end
 -- @param str string
 -- @param left string: left bracket
 -- @param right string: right bracket
--- @param remove boolean: whether to remove the pairs, default false
-function M.count(str, left, right, remove)
+-- @param opts table: options
+-- @field remove boolean: whether to remove the pairs, default false
+-- @field only_current: only count current line
+function M.count(str, left, right, opts)
   local line = {}
-  remove = remove or false
+  opts = opts or {}
+  local remove = opts.remove or false
   local cur = 1
   local n = 0
   local ln, rn, sn = #left, #right, #str
@@ -108,7 +111,7 @@ function M.count(str, left, right, remove)
       n = n + 1
       cur = cur + #left
     elseif str:sub(cur, cur + rn - 1) == right then
-      n = n - 1
+      if not opts.only_current or n > 0 then n = n - 1 end
       cur = cur + #right
     else
       if remove then table.insert(line, str:sub(cur, cur)) end

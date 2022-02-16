@@ -428,8 +428,8 @@ end
 function Pairs:get_count(left_line, right_line, left, right)
   local l = self:clean(left_line, left)
   local r = self:clean(right_line, left)
-  local lc = u.count(l, left, right)
-  local rc = u.count(r:reverse(), right:reverse(), left:reverse())
+  local lc = u.count(l, left, right, {only_current = true})
+  local rc = u.count(r:reverse(), right:reverse(), left:reverse(), {only_current = true})
   return lc, rc
 end
 
