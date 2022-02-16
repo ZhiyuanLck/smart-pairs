@@ -24,7 +24,12 @@ local Pairs = {
       {'`', '`', {triplet = true}},
     },
     tex = {
-      {'$', '$', {cross_line = true}}
+      {'$', '$', {cross_line = true}},
+      -- Chinese pairs
+      {'（', '）'},
+      {'【', '】'},
+      {'‘', '’'},
+      {'“', '”'},
     }
   },
   default_opts = {
