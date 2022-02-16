@@ -371,8 +371,21 @@ function Pairs:has_left(line, ctn, pair)
   end
 end
 
+-- check if line has left bracket at end
+function Pairs:has_left_end(line)
+  if not line then return false end
+  local _line = self:clean_all(line)
+  for _, pair in ipairs(self:get_pairs()) do
+    if (pair.opts.triplet and self:clean(line, pair.left, false):match(u.triplet(pair.left) .. '%s*$')) or
+      (pair.opts.cross_line and _line:match(u.escape(pair.left) .. '%s*$')) then
+      return pair
+    end
+  end
+  return false
+end
+
 -- check if line has right bracket at start
-function Pairs:has_right(line)
+function Pairs:has_right_start(line)
   if not line then return false end
   local _line = self:clean_all(line)
   for _, pair in ipairs(self:get_pairs()) do

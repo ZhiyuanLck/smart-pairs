@@ -24,7 +24,7 @@ local function type_aux()
   left_line = left_line:match('(.-)%s*$')
   right_line = right_line:match('^%s*(.-)%s*$')
 
-  local pair = P:has_right(right_line)
+  local pair = P:has_right_start(right_line)
 
   local m = search_up(pair) or {}
   if pair then

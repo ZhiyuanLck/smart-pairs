@@ -2,6 +2,7 @@ local M = {}
 local fmt = string.format
 local u = require('pairs.utils')
 local P = require('pairs')
+local fb = require('pairs.fallback')
 
 -- delete to less indent
 local function delete_less_indent()
@@ -67,7 +68,7 @@ local function del_empty_lines()
     cur = cur + 1
   end
 
-  local has_right = P:has_right(line)
+  local has_right = P:has_right_start(line)
 
   -- 0-indexed line index of first nonempty line when searching below
   local below_idx = cur
@@ -135,6 +136,7 @@ local function del_empty_lines()
         u.set_cursor(above_idx + 2, left_line)
       else
         u.feedkeys(trigger_bracket and '<c-u><bs>' or '<bs>')
+        if not P:has_left_end(line1) then u.feedkeys('<space>') end
       end
     else
       u.feedkeys('<bs>')
