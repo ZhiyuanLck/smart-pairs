@@ -51,20 +51,7 @@ local function del_empty_lines()
     cur = cur - 1
   end
 
-  local left, has_left
-  if line then
-    for _, pair in ipairs(P:get_pairs()) do
-      if not pair.opts.cross_line and not pair.opts.triplet then goto continue end
-      if pair.opts.triplet then
-        left = P:clean(line, pair.left, false):match(fmt('(%s)%%s*$', string.rep(u.escape(pair.left), 3)))
-        left = left and pair.left
-      else
-        left = P:clean(line, pair.left):match(fmt('(%s)%%s*$', u.escape(pair.left)))
-      end
-      if left then has_left = true break end
-      ::continue::
-    end
-  end
+  local has_left = P:has_left(line)
 
   -- 0-indexed line index of first nonempty line when searching up
   local above_idx = cur
@@ -78,14 +65,7 @@ local function del_empty_lines()
     cur = cur + 1
   end
 
-  local has_right
-  if has_left and line then
-    if P:get_opts(left).triplet then
-      has_right = P:clean(line, left, false):match(fmt('^%%s*(%s)', string.rep(u.escape(P:get_right(left)), 3)))
-    else
-      has_right = P:clean(line, left):match(fmt('^%%s*(%s)', u.escape(P:get_right(left))))
-    end
-  end
+  local has_right = P:has_right(line)
 
   -- 0-indexed line index of first nonempty line when searching below
   local below_idx = cur
@@ -121,7 +101,7 @@ local function del_empty_lines()
   local trigger_bracket = indent2 > 0 and loose_trigger_bracket
 
   -- inside brackets, all blanks are deleted
-  if has_left and has_right then
+  if has_right then
     if enable_sub('inside_brackets') then
       if below_idx - above_idx > 2 then
         u.del_lines(above_idx + 1, below_idx - 1)
@@ -192,7 +172,6 @@ local function del_current_line()
     local left_blank = left_line:match(u.escape(pair.left) .. '(%s*)$')
     if not left_blank then goto continue end
     del_l = #left_blank
-    -- local right_part, right_blank = right_line:match('^(%s*)' .. escape(pair.right))
     local right_blank, right_part = right_line:match(fmt('^(%%s*)(%s)', u.escape(pair.right)))
     del_r = right_blank and #right_blank or #right_line:match('^%s*')
     if (del_l > 0 and del_r == 0) or (del_l == 1 and del_r == 1) then -- delete all blanks

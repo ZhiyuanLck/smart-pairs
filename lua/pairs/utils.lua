@@ -96,7 +96,10 @@ end
 -- @param str string
 -- @param left string: left bracket
 -- @param right string: right bracket
-function M.count(str, left, right)
+-- @param remove boolean: whether to remove the pairs, default false
+function M.count(str, left, right, remove)
+  local line = {}
+  remove = remove or false
   local cur = 1
   local n = 0
   local ln, rn, sn = #left, #right, #str
@@ -108,9 +111,21 @@ function M.count(str, left, right)
       n = n > 0 and n - 1 or n
       cur = cur + #right
     else
+      if remove then table.insert(line, str:sub(cur, cur)) end
       cur = cur + 1
     end
   until (cur > sn)
+  if remove then return table.concat(line), n end
+  return n
+end
+
+-- count occurrences of str in line, ignore escaped ones
+-- @param line string: line to be searched
+-- @param str string: pattern
+-- @return number
+function M.match_count(line, str)
+  local n = 0
+  for _ in line:gmatch(str) do n = n + 1 end
   return n
 end
 
@@ -125,6 +140,16 @@ end
 function M.call(func, ...)
   if not func then return end
   return func(...)
+end
+
+-- get lua escaped triplet pair
+function M.triplet(left)
+  return string.rep(3, M.escape(left))
+end
+
+-- get indentation of line
+function M.get_indent(line)
+  return line:match('^%s*')
 end
 
 local function warn(msg)

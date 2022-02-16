@@ -299,9 +299,9 @@ end
 -- remove escaped brackets and ignore pattern
 -- @param line string: line to be processed
 -- @param left string: left bracket
--- @param respect_triplet boolean: whether to remove possible triplet pair, default true
+-- @param remove_triplet boolean: whether to remove possible triplet pair, default true
 -- @return string: clean line
-function Pairs:clean(line, left, respect_triplet)
+function Pairs:clean(line, left, remove_triplet)
   -- ignore \\
   line = line:gsub('\\\\', '')
   -- ignore escaped pair
@@ -317,12 +317,62 @@ function Pairs:clean(line, left, respect_triplet)
   end
   -- ignore string
   line = line:gsub("\\'", ''):gsub('\\"', '')
+  line = line:gsub("'.-'", ''):gsub('".-"', '')
   -- remove possible triplet
-  if respect_triplet == nil or respect_triplet then
+  if remove_triplet or true then
     line = line:gsub('"""', ''):gsub("'''", '')
-    line = line:gsub("'.-'", ''):gsub('".-"', '')
   end
   return line
+end
+
+-- remove all escaped brackets and ignore pattern
+function Pairs:clean_all(line)
+  line = line:gsub('\\\\', '')
+  for _, pair in ipairs(self:get_pairs()) do
+    line = line:gsub('\\' .. u.escape(pair.left), '')
+    if pair.right ~= pair.left then
+      line = line:gsub('\\' .. u.escape(pair.right), '')
+    end
+    for _, pattern in ipairs(self:get_ignore(pair.left)) do
+      line = line:gsub(u.escape(pattern), '')
+    end
+  end
+  line = line:gsub("\\'", ''):gsub('\\"', '')
+  line = line:gsub("'.-'", ''):gsub('".-"', '')
+  return line
+end
+
+-- check if line has extra left bracket
+-- @param line stirng: line to be searched
+-- @param right: specified pair
+function Pairs:has_left(line, pair)
+  if not line then return false end
+  local _line = self:clean_all(line)
+  local _has_left = function(p)
+    return (p.opts.triplet and u.match_count(self:clean(line, p.left, false), u.triplet(p.left)) % 2 == 1) or
+      (p.opts.cross_line and u.count(_line, p.left, p.right) > 0)
+  end
+  if pair then
+    if _has_left(pair) then return pair end
+  else
+    for _, _pair in ipairs(self:get_pairs()) do
+      if _has_left(_pair) then return _pair end
+    end
+  end
+  return false
+end
+
+-- check if line has right bracket at start
+function Pairs:has_right(line)
+  if not line then return false end
+  local _line = self:clean_all(line)
+  for _, pair in ipairs(self:get_pairs()) do
+    if (pair.opts.triplet and self:clean(line, pair.left, false):match('^%s*' .. u.triplet(pair.left))) or
+      (pair.opts.cross_line and _line:match('^%s*' .. u.escape(pair.right))) then
+      return pair
+    end
+  end
+  return false
 end
 
 -- test whether to ignore the current left bracket
@@ -367,9 +417,7 @@ end
 -- @return number
 function Pairs:match_count(line, bracket)
   line = self:clean(line, bracket)
-  local n = 0
-  for _ in line:gmatch(u.escape(bracket)) do n = n + 1 end
-  return n
+  return u.match_count(line, u.escape(bracket))
 end
 
 function Pairs:get_indent()
