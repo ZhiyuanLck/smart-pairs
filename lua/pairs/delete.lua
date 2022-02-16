@@ -43,9 +43,10 @@ local function del_empty_lines()
   -- search up the first nonempty line
   local linenr = vim.fn.line('.')
   local cur = linenr - 2
+  local line_idx = cur
 
   local line
-  while (cur >= 0) do
+  while (cur >= 0 and line_idx - cur <= P.max_search_lines) do
     line = u.get_line(cur)
     if not line:match('^%s*$') then break end
     cur = cur - 1
@@ -58,8 +59,9 @@ local function del_empty_lines()
 
   -- search down the first nonempty line
   cur =  empty_pre and linenr - 1 or linenr -- handle empty pre
+  line_idx = cur
   local end_nr = vim.fn.line('$')
-  while (cur < end_nr) do
+  while (cur < end_nr and cur - line_idx <= P.max_search_lines) do
     line = u.get_line(cur)
     if not line:match('^%s*$') then break end
     cur = cur + 1
