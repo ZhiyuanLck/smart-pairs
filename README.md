@@ -12,7 +12,7 @@ use {'ZhiyuanLck/smart-pairs', event = 'InsertEnter', config = function() requir
 reason to let me know. I will try to find if there is a better solution and if not I will make it
 configurable.
 
-***Note***: Only support bracket of single char (of multibyte). For multi-char paris, see snippet
+***Note***: Only support bracket of single char (of multibyte). For multi-char pairs, see snippet
 plugins.
 
 ***Note***: Lines in the examples below represent for the *whole line* not the part of line.
