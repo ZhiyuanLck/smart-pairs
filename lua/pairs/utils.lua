@@ -146,7 +146,7 @@ end
 
 -- get lua escaped triplet pair
 function M.triplet(left)
-  return string.rep(3, M.escape(left))
+  return string.rep(M.escape(left), 3)
 end
 
 -- get indentation of line
