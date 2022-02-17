@@ -5,19 +5,17 @@
 One line to setup the plugin with `packer.nvim`
 
 ```lua
-use {'ZhiyuanLck/smart-pairs', event="InsertEnter", config=function() require('pairs'):setup() end}
+use {'ZhiyuanLck/smart-pairs', event = 'InsertEnter', config = function() require('pairs'):setup() end}
 ```
 
-***Note***: This plugin is still in develop, so most behaviors are set by default. You can request the feature of
-options that can control the default behaviors.
+***Note***: If you find some annoying behaviors, please create an issue with the example and the
+reason to let me know. I will try to find if there is a better solution and if not I will make it
+configurable.
 
-***Note***: Only support bracket of single char.
+***Note***: Only support bracket of single char (of multibyte). For multi-char paris, see snippet
+plugins.
 
 ***Note***: Lines in the examples below represent for the *whole line* not the part of line.
-
-***Note***: Unfortunately, the plugin cannot take every corner case into consideration and take care of the taste of all
-people. When the behavior of the plugin is not what you want and cannot be configured, just type the bracket with the
-prefix `<c-v>` to avoid the mapping, such as `<c-v>(` to get a original `(` bracket.
 
 ## Configuration
 
