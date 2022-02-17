@@ -97,29 +97,28 @@ end
 -- @param left string: left bracket
 -- @param right string: right bracket
 -- @param opts table: options
--- @field remove boolean: whether to remove the pairs, default false
--- @field only_current: only count current line
-function M.count(str, left, right, opts)
-  local line = {}
-  opts = opts or {}
-  local remove = opts.remove or false
+-- @return table
+-- @field m number: absolute counts of left bracket
+-- @field n number: relative counts of left bracket
+function M.count(str, left, right)
   local cur = 1
+  local m = 0
   local n = 0
   local ln, rn, sn = #left, #right, #str
   repeat
     if str:sub(cur, cur + ln - 1) == left then
+      m = m + 1
       n = n + 1
       cur = cur + #left
     elseif str:sub(cur, cur + rn - 1) == right then
-      if not opts.only_current or n > 0 then n = n - 1 end
+      m = m - 1
+      if n > 0 then n = n - 1 end
       cur = cur + #right
     else
-      if remove then table.insert(line, str:sub(cur, cur)) end
       cur = cur + 1
     end
   until (cur > sn)
-  if remove then return table.concat(line), n end
-  return n
+  return {m = m, n = n}
 end
 
 -- count occurrences of str in line, ignore escaped ones

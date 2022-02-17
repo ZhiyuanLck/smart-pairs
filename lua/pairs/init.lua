@@ -354,17 +354,20 @@ end
 function Pairs:has_left(line, ctn, pair)
   local _line = self:clean_all(line)
   ctn = ctn or {}
+
   local _count = function(p)
     ctn[p.left] = ctn[p.left] or 0
     if p.opts.triplet then
       ctn[p.left] = ctn[p.left] + u.match_count(self:clean(line, p.left, false), u.triplet(p.left))
       return ctn[p.left] % 2 == 1
     elseif p.opts.cross_line then
-      ctn[p.left] = ctn[p.left] +  u.count(_line, p.left, p.right)
-      return ctn[p.left] > 0
+      local count = u.count(_line, p.left, p.right)
+      if ctn[p.left] + count.n > 0 then return true end
+      ctn[p.left] = ctn[p.left] +  count.m
     end
     return false
   end
+
   if pair and _count(pair) then return pair end
   for _, _pair in ipairs(self:get_pairs()) do
     if _count(_pair) then return _pair end
@@ -428,8 +431,8 @@ end
 function Pairs:get_count(left_line, right_line, left, right)
   local l = self:clean(left_line, left)
   local r = self:clean(right_line, left)
-  local lc = u.count(l, left, right, {only_current = true})
-  local rc = u.count(r:reverse(), right:reverse(), left:reverse(), {only_current = true})
+  local lc = u.count(l, left, right).n
+  local rc = u.count(r:reverse(), right:reverse(), left:reverse()).n
   return lc, rc
 end
 
