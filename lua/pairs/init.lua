@@ -78,7 +78,7 @@ local Pairs = {
     }
   },
   autojump_strategy = {
-    unbalanced = 'right', -- all, right, loose_right, none
+    unbalanced = 'all', -- all, right, none
   },
   mapping = {
     jump_left_in_any   = '<m-[>',
@@ -353,6 +353,7 @@ end
 -- @param ctn table: counter table
 -- @param pair table: pair obj
 function Pairs:has_left(line, ctn, pair)
+  if not line then return false end
   local _line = self:clean_all(line)
   ctn = ctn or {}
 
@@ -429,7 +430,7 @@ function Pairs:ignore_after(right_line, left)
 end
 
 -- get left bracket count on the left and above (limited by max_search_lines)
-function Pairs:get_cross_count(left, right)
+function Pairs:get_cross_count(left, right, cache)
   local line_idx = vim.fn.line('.') - 1
   local l_idx = line_idx - (self.max_search_lines or 0)
   l_idx = l_idx < 0 and 0 or l_idx

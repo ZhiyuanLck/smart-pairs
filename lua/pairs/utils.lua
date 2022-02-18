@@ -197,6 +197,12 @@ function M.check_opts(opts)
   opt_warn('delete.empty_line.enable_bracket', 'delete.empty_line.enable_sub.inside_brackets')
   opt_warn('delete.empty_line.enable_multiline', 'delete.empty_line.enable_sub.text_multi_line')
   opt_warn('delete.empty_line.enable_oneline', 'delete.empty_line.enable_sub.text_delete_to_prev_indent')
+  -- 2022/2/18
+  opt_warn('delete.autojump_strategy.unbalanced')
+  local o = get_opt('delete.autojump_strategy.unbalanced')
+  if o == 'loose_right' then
+    warn(fmt("value '%s' of option '%s' has been removed", 'loose_right', 'delete.autojump_strategy.unbalanced'))
+  end
 end
 
 return M

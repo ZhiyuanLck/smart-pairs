@@ -105,7 +105,7 @@ local default_opts = {
     }
   },
   autojump_strategy = {
-    unbalanced = 'right', -- all, right, loose_right, none
+    unbalanced = 'all', -- all, right, none
   },
   mapping = {
     jump_left_in_any   = '<m-[>',
@@ -334,9 +334,7 @@ values are
 - `'all'`: always enable smart jump when you type a right bracket, but it may be not ideal when
   there is a cross-line pair.
 - `'right'`: enable smart jump only when there is a right bracket next to the cursor, such as `(|)`.
-- `'loose_right'`: enable smart jump only when there is a right bracket (with prefix spaces) next to
-  the cursor, such as`(|_)`.
-- `'none' or nil`: forbid smart jump, always type the right bracket rather than jump.
+- `other value`: forbid smart jump, always type the right bracket rather than jump.
 
 **`max_search_lines`**: number, max lines to search when needed, default 100.
 

@@ -51,22 +51,42 @@ local function type_right_neq(left, right)
   end
 
   local strategy = P.autojump_strategy.unbalanced
-  -- always do not jump
-  if not strategy or strategy == 'none' or
-    (strategy ~= 'all' and strategy ~= 'right' and strategy ~= 'loose_right') then
-    do_nothing()
-    return
-  end
 
-  -- avoid do_nothing use the escaped right
   local _right = u.escape(right)
-  if (strategy == 'loose_right' and not right_line:match('^%s*' .. _right)) or
-    (strategy == 'right' and not right_line:match('^' .. _right)) then
-    do_nothing()
-    return
-  end
+  if strategy == 'right' then
+    local m = right_line:match('^' .. _right)
+    if m then
+      u.set_cursor(0, left_line .. m)
+    else
+      do_nothing()
+    end
+  elseif strategy == 'all' then
+    local line_idx = vim.fn.line('.') - 1
+    local cur = line_idx
+    local end_nr = vim.api.nvim_buf_line_count(0)
+    local end_idx = line_idx + P.max_search_lines
+    if end_idx >= end_nr then end_idx = end_nr - 1 end
 
-  u.set_cursor(0, left_line .. right_line:match('^.-' .. _right))
+    local n = 0
+    while (cur <= end_idx) do
+      local line = cur == line_idx and right_line or u.get_line(cur)
+      local count = u.count(line:reverse(), right:reverse(), left:reverse())
+      if n + count.n > 0 then
+        local m = line:match('^.-' .. _right)
+        if cur == line_idx then
+          u.set_cursor(0, left_line .. m)
+        else
+          u.set_cursor(cur + 1, m)
+        end
+        return
+      else
+        n = n + count.m
+      end
+      cur = cur + 1
+    end
+  else
+    do_nothing()
+  end
 end
 
 -- action when two brackets are equal
