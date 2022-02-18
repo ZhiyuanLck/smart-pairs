@@ -60,6 +60,7 @@ local function del_empty_lines()
 
   -- search down the first nonempty line
   cur =  empty_pre and linenr - 1 or linenr -- handle empty pre
+  line = nil
   line_idx = cur
   local end_nr = vim.fn.line('$')
   while (cur < end_nr and cur - line_idx <= P.max_search_lines) do
