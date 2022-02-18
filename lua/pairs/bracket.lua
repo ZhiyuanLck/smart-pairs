@@ -10,7 +10,8 @@ local function type_left_neq(left, right)
   local ignore_after = P:ignore_after(right_line, left)
 
   if not ignore_pre and not ignore_after then
-    local lc, rc = P:get_count(left_line, right_line, left, right)
+    -- local lc, rc = P:get_count(left_line, right_line, left, right)
+    local lc, rc = P:get_cross_count(left, right)
     if lc >= rc then
       right_line = right .. right_line
     end
@@ -40,10 +41,11 @@ local function type_right_neq(left, right)
     return
   end
 
-  local lc, rc = P:get_count(left_line, right_line, left, right)
+  -- local lc, rc = P:get_count(left_line, right_line, left, right)
+  local lc, rc = P:get_cross_count(left, right)
   -- lots of left brackets more than right, we need the right one
   -- or the first right bracket is to be typeset after revoming the counterbalances on the right
-  if lc > rc then
+  if lc > rc or rc == 0 then
     do_nothing()
     return
   end

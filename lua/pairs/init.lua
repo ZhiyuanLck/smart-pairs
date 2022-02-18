@@ -1,6 +1,7 @@
 local fmt = string.format
 local u = require('pairs.utils')
 local fb = require('pairs.fallback')
+local push = table.insert
 
 local Pairs = {
   pairs = {
@@ -85,7 +86,7 @@ local Pairs = {
     jump_left_out_any  = '<m-{>',
     jump_right_in_any  = '<m-}>',
   },
-  max_search_lines = 100,
+  max_search_lines = 500,
 }
 
 Pairs.__index = Pairs
@@ -210,7 +211,7 @@ function Pairs:setup(opts)
 
       pair.opts.balanced = pair.left == pair.right
 
-      table.insert(new_pairs[ft], pair)
+      push(new_pairs[ft], pair)
       self.lr[ft][pair.left] = pair
       self.rl[ft][pair.right] = pair
     end
@@ -223,7 +224,7 @@ function Pairs:setup(opts)
     if ft ~= '*' then
       for _, pair in ipairs(self.pairs['*']) do
         if not self.lr[ft][pair.left] then
-          table.insert(pairs, pair)
+          push(pairs, pair)
         end
       end
     end
@@ -427,6 +428,50 @@ function Pairs:ignore_after(right_line, left)
   return ignore_after and vim.fn.match(right_line, ignore_after) ~= -1
 end
 
+-- get left bracket count on the left and above (limited by max_search_lines)
+function Pairs:get_cross_count(left, right)
+  local line_idx = vim.fn.line('.') - 1
+  local l_idx = line_idx - (self.max_search_lines or 0)
+  l_idx = l_idx < 0 and 0 or l_idx
+  local end_nr = vim.api.nvim_buf_line_count(0)
+  local r_idx = line_idx + (self.max_search_lines or 1)
+  r_idx = r_idx > end_nr and end_nr or r_idx
+  local l = l_idx < line_idx and vim.api.nvim_buf_get_lines(0, l_idx, line_idx, true) or {}
+  local r = r_idx > line_idx + 1 and vim.api.nvim_buf_get_lines(0, line_idx + 1, r_idx, true) or {}
+  local left_line, right_line = u.get_cursor_lr()
+  local ln = #l
+  local rn = #r
+  local lc = 0
+  local rc = 0
+
+  local count = function(line, reverse)
+    if reverse then
+      return u.count(self:clean(line, left, right):reverse(), right:reverse(), left:reverse())
+    end
+    return u.count(self:clean(line, left, right), left, right)
+  end
+
+  if ln == 0 then
+    lc = count(left_line).n
+  else
+    lc = lc + count(left_line).m
+    for i = 1, ln do
+      lc = lc + (i == 1 and count(l[i]).n or count(l[i]).m)
+    end
+  end
+
+  if rn == 0 then
+    rc = count(right_line, true).n
+  else
+    rc = rc + count(right_line, true).m
+    for i = 1, rn do
+      rc = rc + (i == rn and count(r[i], true).n or count(r[i], true).m)
+    end
+  end
+  return lc, rc
+end
+
+-- NOTE: to be removed
 -- get left bracket count on the left and the right bracket count on the right
 function Pairs:get_count(left_line, right_line, left, right)
   local l = self:clean(left_line, left)
