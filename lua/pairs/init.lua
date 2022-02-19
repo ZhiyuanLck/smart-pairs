@@ -173,7 +173,7 @@ local Pairs = {
     enable_fallback = fb.enter,
   },
   autojump_strategy = {
-    unbalanced = 'all', -- all, right, none
+    unbalanced = 'right', -- all, right, none
   },
   mapping = {
     jump_left_in_any   = '<m-[>',
