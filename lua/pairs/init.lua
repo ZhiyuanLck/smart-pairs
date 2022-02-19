@@ -21,6 +21,9 @@ local Pairs = {
       {"'", "'", {triplet = true}},
       {'"', '"', {triplet = true}},
     },
+    ruby = {
+      {'|', '|'},
+    },
     markdown = {
       {'`', '`', {triplet = true}},
     },
