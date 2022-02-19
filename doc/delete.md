@@ -69,8 +69,10 @@ one = {
 - `require('pairs.fallback').delete`: normal deletion, the same as vanilla `<bs>`
 - `require('pairs.fallback').delete_indent`: delete until an shorter indentation inferred from the lines above
 
+## Default Deletion Setting
+
 <details>
-<summary><h2>Default config</h2></summary>
+<summary>Default config</summary>
 
 ```lua
   delete = {
