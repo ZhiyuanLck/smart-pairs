@@ -25,12 +25,20 @@ Setup the options by
 require('pairs'):setup(opts)
 ```
 
+All default options are set in [init.lua](lua/pairs/init.lua).
+
+
+### Quick Start For Custom Pairs
+
+All pairs are grouped by file types, and `'*'` contain the global pair list. Every pair is a table
+list, whose first element is the left bracket, second element is the right bracket, and the last is
+the optional pair options, i.e. a `pair` is specified by `{ left, right, opts (optional) }`. At
+last, all types of pairs are saved in top-level option `pairs`.
+
 <details>
-<summary><b>Default options</b></summary>
+<summary><b>Default pairs</b></summary>
 
 ```lua
-local fb = require('pairs.fallback')
-local default_opts = {
   pairs = {
     ['*'] = {
       {'(', ')'},
@@ -59,98 +67,22 @@ local default_opts = {
       {'‘', '’'},
       {'“', '”'},
     }
-  },
-  default_opts = {
-    ['*'] = {
-      ignore_pre = '\\\\', -- double backslash or [[\\]]
-      ignore_after = '\\w', -- double backslash or [[\w]]
-    },
-    lua = {
-      ignore_pre = '[%\\\\]' -- double backslash
-    }
-  },
-  delete = {
-    enable_mapping  = true,
-    enable_cond     = true,
-    enable_fallback = fb.delete,
-    empty_line = {
-      enable_cond      = true,
-      enable_fallback  = fb.delete,
-      enable_sub = {
-        start                      = true,
-        inside_brackets            = true,
-        left_bracket               = true,
-        text_multi_line            = true,
-        text_delete_to_prev_indent = true,
-      },
-      trigger_indent_level = 1,
-    },
-    current_line = {
-      enable_cond     = true,
-      enable_fallback = fb.delete,
-    }
-  },
-  space = {
-    enable_mapping  = true,
-    enable_cond     = true,
-    enable_fallback = fb.space,
-  },
-  enter = {
-    enable_mapping  = true,
-    enable_cond     = true,
-    enable_fallback = fb.enter,
-    indent = {
-      ['*'] = 1,
-      python = 2,
-    }
-  },
-  autojump_strategy = {
-    unbalanced = 'all', -- all, right, none
-  },
-  mapping = {
-    jump_left_in_any   = '<m-[>',
-    jump_right_out_any = '<m-]>',
-    jump_left_out_any  = '<m-{>',
-    jump_right_in_any  = '<m-}>',
-  },
-  max_search_lines = 100,
-}
+  }
 ```
 
 </details>
 
-### Options
+|Options|Description|Default|
+|-------|-----------|-------|
+|`ignore_pre`|vim regex pattern, brackets after the pattern keep its original meaning|`'\\\\'`|
+|`ignore_after`|vim regex pattern, only for unbalanced brackets, forbid right bracket completion with the post pattern|`'\\w'`|
+|`ignore`|string or list, patterns to ignore when counting the number of brackets|escaped brackets|
+|`triplet`|boolean, only for balanced brackets, expand the triplet brackets|`false`|
+|`cross_line`|boolean, whether the bracket can cross lines|`true` for unbalanced pairs, `false` for balanced pairs|
+|`enable_smart_space`|boolean, whether to enable smart space|`true` for unbalanced pairs, `false` for balanced pairs|
 
-**`pairs`**: pairs table specified by `filetype = pairs list`. Use `['*'] = ...` to represent for
-global pairs and options.
-
-A `pair` is specified by `{ left, right, opts (optional) }`
-
-<details>
-<summary><b>pair options</b></summary>
-
-**`ignore_pre`**: vim regex pattern, brackets after the pattern keep its original meaning.
-
-**`ignore_after`**: vim regex pattern, only for unbalanced brackets, right bracket will never be
-completed when left bracket is typeset before the pattern except the right bracket.
-
-**`ignore`**: string or string list, these patterns will be removed before the current line is
-parsed to make strategies. Note that escaped pair has been removed by default.
-
-**`triplet`**: boolean, only for balanced brackets, expand the triplet brackets, default false.
-
-**`cross_line`**: boolean, whether the bracket can cross lines, default true for unbalanced pairs
-and false for balanced pairs.
-
-**`enable_smart_space`**: boolean, whether to enable smart space, default true for unbalanced pairs
-and false for balanced pairs.
-
-</details>
-
-<details>
-<summary><b>global options</b></summary>
-
-**`default_opts`**: global default values of pair options. The default values are
+Sometimes, it is convenient to use option `default_opts` to set the default value of the option of
+each pair which belongs to the same file type to avoid repeated settings.
 
 ```lua
   default_opts = {
@@ -164,181 +96,23 @@ and false for balanced pairs.
   },
 ```
 
-**`space.enable_mapping`**: boolean or function, map `<space>` to enable smart space, if set to
-`false`, `<space>` will not be mapped, default `true`.
+### Mapping Config
 
-**`space.enable_cond`**: boolean or function, condition to enable smart space, default `true`.
+Option that controls whether to map the specified key is `<key>.enable_mapping`, where the value of
+`<key>` is one of the `space`, `enter` and `delete`, which represent for `<space>`, `<cr>` and
+`<bs>` that will be mapped indivisually. You can set it to a boolean value or a function that
+returns a boolean value.
 
-**`space.enable_fallback`**: function, if `space.enable_cond` is evaluated to `false`, then the
-fallback function will be called, default `require('pairs.utils').space`.
+***Note***: The value of `<key>` below can also be `delete.empty_line`, `delete.empty_pre` and
+`delete.current_line`.
 
-**`space.before_hook`**: hook function which is called before smart space is triggered.
+Option `<key>.enable_cond` (boolean or function) define the condition to decide when to perform the
+smart action, and if the test fails, function `<key>.enable_fallback` is called.
 
-**`space.after_hook`**: hook function which is called after smart space is triggered.
+Option `<key>.before_hook` and `<key>.after_hook` define the hook funtion that will run before and
+after the smart actions.
 
-**`enter.enable_mapping`**: boolean or function, map `<cr>` to enable smart enter, if set to
-`false`, `<cr>` will not be mapped, default `true`.
-
-**`enter.enable_cond`**: boolean or function, condition to enable smart enter, default `true`.
-
-**`enter.enable_fallback`**: function, if `enter.enable_cond` is evaluated to `false`, then the
-fallback function will be called, default `require('pairs.utils').enter`.
-
-**`enter.before_hook`**: hook function which is called before smart enter is triggered.
-
-**`enter.after_hook`**: hook function which is called after smart enter is triggered.
-
-**`enter.indent`**: indent table, when smart enter is enabled, extra indent will be added according
-the value of this option.
-
-**`delete.enable_mapping`**: boolean or function, map `<bs>` to enable smart deletion, if set to
-`false`, `<bs>` will not be mapped, default `true`.
-
-**`delete.enable_cond`**: boolean or function, condition to enable smart deletion, default `true`.
-
-**`delete.enable_fallback`**: function, if `delete.enable_cond` is evaluated to `false`, then the
-fallback function will be called, default `require('pairs.utils').delete`.
-
-**`delete.before_hook`**: hook function which is called before smart deletion is triggered.
-
-**`delete.after_hook`**: hook function which is called after smart deletion is triggered.
-
-**`delete.empty_line.enable_cond`**: boolean or function, condition to enable smart deletion of
-empty lines, default `true`.
-
-**`delete.empty_line.enable_fallback`**: function, if `delete.empty_line.enable_cond` is evaluated
-to `false`, then the fallback function will be called, default `require('pairs.utils').delete`.
-
-**`delete.empty_line.enable_sub.start`**: enable smart deletion of empty lines at start of file,
-default `true`.
-
-```
-_ denotes <space>
-
->>> start of file
->>> empty line
->>> empty line
-__|
-text
-=================
->>> start of file
-|text
-
-
->>> start of file
->>> empty line
->>> empty line
-__|text
-=================
->>> start of file
-__|text
-```
-
-**`delete.empty_line.enable_sub.inside_brackets`**: enable smart deletion of blanks between
-brackets, default `true`.
-
-```
-_ denotes <space>
-
-First deletion will delete all but current empty line
-=================
-{
-
-____|
-}
-
-Second deletion will delete a tab
-=================
-{
-____|
-}
-=================
-{
-__|
-}
-
-Now the relative indent level is 1, smart deletion is triggered
-=================
-{|}
-```
-
-**`delete.empty_line.enable_sub.left_bracket`**: enable smart deletion of empty lines when only a
-left bracket is detected, default `true`.
-
-```
-{
-
-  |text
-=================
-{
-  |text
-=================
-{|text
-```
-
-**`delete.empty_line.enable_sub.text_multi_line`**: enable smart deletion of multiple empty lines
-between text, default `true`.
-
-```
-text1
-
-
-  |text2
-=================
-text1
-
-  |text2
-
------------------
-
-text1
-
-
-  |
-  text2
-=================
-text1
-  |
-  text2
-```
-
-**`delete.empty_line.enable_sub.text_delete_to_prev_indent`**: enable smart deletion when there is
-one empty line or zero empty line but there are blanks before the cursor, then it will delete to the
-previsous indentation, default `true`.
-
-```
-text1
-  text2
-          |
-    text3
-=================
-text1
-  text2
-  |
-    text3
-```
-
-**`delete.empty_line.trigger_indent_level`**: smart deletion is triggered only when the relative
-indent level is less than the option value where the first nonempty line is ended with a left
-bracket that can cross lines and/or spaces, default `1`.
-
-**`delete.current_line.enable_cond`**: boolean or function, condition to enable smart deletion in
-current line, default `true`.
-
-**`delete.current_line.enable_fallback`**: function, if `delete.current_line.enable_cond` is
-evaluated to `false`, then the fallback function will be called, default `require('pairs.utils').delete`.
-
-**`autojump_strategy.unbalanced`**: string, strategy applied to autojump, default `'right'`. All
-values are
-
-- `'all'`: always enable smart jump when you type a right bracket, but it may be not ideal when
-  there is a cross-line pair.
-- `'right'`: enable smart jump only when there is a right bracket next to the cursor, such as `(|)`.
-- `other value`: forbid smart jump, always type the right bracket rather than jump.
-
-**`max_search_lines`**: number, max lines to search when needed, default 100.
-
-**`mapping`**: key mappings
+Option `mapping` is used to define other key mappings
 
 - `jump_left_in_any`: jump to the right side of left bracket on the left/above of the cursor,
   default `<m-[>`.
@@ -358,7 +132,30 @@ opts = {
 }
 ```
 
-</details>
+### Advanced Options
+
+[Control the behavior of smart deletion](doc/delete.md)
+
+### Other Options
+
+**`indent`**: indent table, insert correct indentation according to this option if needed
+
+```lua
+  indent = {
+    ['*'] = 1,
+    python = 2,
+  }
+```
+
+**`autojump_strategy.unbalanced`**: string, strategy applied to autojump, default `'right'`. All
+values are
+
+- `'all'`: always enable smart jump when you type a right bracket, but it may be not ideal when
+  there is a cross-line pair.
+- `'right'`: enable smart jump only when there is a right bracket next to the cursor, such as `(|)`.
+- `other value`: forbid smart jump, always type the right bracket rather than jump.
+
+**`max_search_lines`**: number, max lines to search when needed, default 500.
 
 ## Work with Other Plugin
 

@@ -1,5 +1,6 @@
 local M = {}
 local fmt = string.format
+local rep = string.rep
 
 -- delete lines of [idx1, idx2), idx1 and idx2 is 0-based index
 -- @param idx1 number
@@ -133,7 +134,7 @@ end
 
 -- if opt is boolean return opt, then is a function
 function M.enable(opt)
-  if opt == nil then return true end
+  if opt == nil then return false end
   if type(opt) == 'boolean' then return opt end
   if type(opt) == 'function' then return opt() end
   error('enable option should be a boolean or function')
@@ -146,12 +147,19 @@ end
 
 -- get lua escaped triplet pair
 function M.triplet(left)
-  return string.rep(M.escape(left), 3)
+  return rep(M.escape(left), 3)
 end
 
--- get indentation of line
+-- get indentation of line or by the level
 function M.get_indent(line)
-  return line:match('^%s*')
+  if type(line) == 'string' then
+    return line:match('^%s*')
+  end
+  if type(line) == 'number' then
+    local one = vim.bo.et and string.rep(' ', vim.bo.sw) or '\t'
+    return string.rep(one, line)
+  end
+  error('param #1 should be a string or number')
 end
 
 local function warn(msg)
@@ -183,6 +191,11 @@ function M.check_opts(opts)
     end
   end
 
+  local change_warn = function(opt)
+    if not get_opt(opt) then return end
+    warn(fmt("option '%s' has been removed and transferred to another new option, please check the document for details", opt))
+  end
+
   -- 2022/2/11
   opt_warn('delete.empty_line.bracket')
   opt_warn('delete.empty_line.enable_end')
@@ -203,6 +216,10 @@ function M.check_opts(opts)
   if o == 'loose_right' then
     warn(fmt("value '%s' of option '%s' has been removed", 'loose_right', 'delete.autojump_strategy.unbalanced'))
   end
+  -- 2022/2/19
+  change_warn('delete.empty_line.enable_sub')
+  change_warn('delete.empty_line.trigger_indent_level')
+  opt_warn('enter.indent', 'indent')
 end
 
 return M

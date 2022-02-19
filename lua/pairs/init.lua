@@ -42,21 +42,117 @@ local Pairs = {
       ignore_pre = '[%\\\\]' -- double backslash
     }
   },
+  indent = {
+    ['*'] = 1,
+    python = 2,
+  },
   delete = {
     enable_mapping  = true,
     enable_cond     = true,
     enable_fallback = fb.delete,
     empty_line = {
-      enable_cond      = true,
-      enable_fallback  = fb.delete,
-      enable_sub = {
-        start                      = true,
-        inside_brackets            = true,
-        left_bracket               = true,
-        text_multi_line            = true,
-        text_delete_to_prev_indent = true,
+      enable_cond     = true,
+      enable_fallback = fb.delete,
+      bracket_bracket = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_one_indent',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = 'smart',
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
       },
-      trigger_indent_level = 1,
+      bracket_text = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_zero_above',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = 'smart',
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
+      },
+      text_bracket = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_one_cur',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = 'smart',
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
+      },
+      text_text = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_one_cur',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = nil,
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
+      },
+    },
+    empty_pre = {
+      enable_cond     = true,
+      enable_fallback = fb.delete,
+      bracket_bracket = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_one_indent',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = 'delete_all',
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
+      },
+      bracket_text = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_zero_below',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = 'leave_zero_below',
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
+      },
+      text_bracket = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_one_indent',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = 'leave_zero_above',
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
+      },
+      text_text = {
+        fallback = fb.delete_indent,
+        multi = {
+          strategy = 'leave_one_cur',
+          fallback = fb.delete_indent,
+        },
+        one = {
+          strategy = nil,
+          trigger_indent_level = 0,
+          fallback = fb.delete,
+        },
+      },
     },
     current_line = {
       enable_cond     = true,
@@ -72,10 +168,6 @@ local Pairs = {
     enable_mapping  = true,
     enable_cond     = true,
     enable_fallback = fb.enter,
-    indent = {
-      ['*'] = 1,
-      python = 2,
-    }
   },
   autojump_strategy = {
     unbalanced = 'all', -- all, right, none
@@ -172,6 +264,7 @@ function Pairs:setup(opts)
   u.merge(self.delete, opts.delete)
   u.merge(self.space, opts.space)
   u.merge(self.enter, opts.enter)
+  u.merge(self.indent, opts.indent)
   u.merge(self.autojump_strategy, opts.autojump_strategy)
 
   for ft, pairs in pairs(opts.pairs or {}) do
@@ -361,32 +454,38 @@ function Pairs:has_left(line, ctn, pair)
     ctn[p.left] = ctn[p.left] or 0
     if p.opts.triplet then
       ctn[p.left] = ctn[p.left] + u.match_count(self:clean(line, p.left, false), u.triplet(p.left))
-      return ctn[p.left] % 2 == 1
+      return ctn[p.left] % 2 == 1 and p
     elseif p.opts.cross_line then
       local count = u.count(_line, p.left, p.right)
-      if ctn[p.left] + count.n > 0 then return true end
+      if ctn[p.left] + count.n > 0 then return p end
       ctn[p.left] = ctn[p.left] +  count.m
     end
-    return false
   end
 
-  if pair and _count(pair) then return pair end
+  if pair then return _count(pair) end
   for _, _pair in ipairs(self:get_pairs()) do
     if _count(_pair) then return _pair end
   end
 end
 
 -- check if line has left bracket at end
-function Pairs:has_left_end(line)
-  if not line then return false end
+-- @param line string: line to be searched
+-- @param pair table: pair obj
+function Pairs:has_left_end(line, pair)
+  if not line then return nil end
   local _line = self:clean_all(line)
-  for _, pair in ipairs(self:get_pairs()) do
-    if (pair.opts.triplet and self:clean(line, pair.left, false):match(u.triplet(pair.left) .. '%s*$')) or
-      (pair.opts.cross_line and _line:match(u.escape(pair.left) .. '%s*$')) then
-      return pair
+  local _has = function(p)
+    if (p.opts.triplet and self:clean(line, p.left, false):match(u.triplet(p.left) .. '%s*$')) or
+      (p.opts.cross_line and _line:match(u.escape(p.left) .. '%s*$')) then
+      return p
     end
   end
-  return false
+
+  if pair then return _has(pair) end
+  for _, _pair in ipairs(self:get_pairs()) do
+    local ret = _has(_pair)
+    if ret then return ret end
+  end
 end
 
 -- check if line has right bracket at start
@@ -399,7 +498,6 @@ function Pairs:has_right_start(line)
       return pair
     end
   end
-  return false
 end
 
 -- test whether to ignore the current left bracket
@@ -493,9 +591,8 @@ end
 
 function Pairs:get_indent()
   local ft = vim.bo.ft
-  local level = self.enter.indent[ft] or self.enter.indent['*'] or 1
-  local one = vim.bo.et and string.rep(' ', vim.bo.sw) or '\t'
-  return string.rep(one, level)
+  local level = self.indent[ft] or self.indent['*'] or 1
+  return u.get_indent(level)
 end
 
 return Pairs
