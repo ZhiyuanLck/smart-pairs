@@ -185,9 +185,9 @@ Typeset right bracket
 
 ```
 press )
-|       --> |)       - type right
-|(ab)   --> |)(ab)   - type right
-(|      --> (|)      - complete right
+|       --> )|       - type right
+|(ab)   --> )|(ab)   - type right
+(|      --> ()|      - complete right
 (|)     --> ()|      - jump right when 'autojump_strategy.unbalanced' is not 'none'
 (| )    --> ()|      - jump right when 'autojump_strategy.unbalanced' is 'all' or 'loose_right'
 (a|b)   --> (ab)|    - jump right when 'autojump_strategy.unbalanced' is 'all'
