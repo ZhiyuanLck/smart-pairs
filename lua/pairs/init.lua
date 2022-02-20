@@ -95,7 +95,7 @@ local Pairs = {
       text_text = {
         fallback = fb.delete_indent,
         multi = {
-          strategy = 'leave_one_cur',
+          strategy = 'leave_one_above',
           fallback = fb.delete_indent,
         },
         one = {
