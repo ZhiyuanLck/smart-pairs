@@ -26,7 +26,7 @@ function Del:search_up()
   while cur >= end_idx do
     local line = u.get_line(cur)
     if match(line, '^%s*$') == nil then
-      self.has_left = P:has_left_end(line, self.right)
+      self.has_left = P:has_left_end(line, self.right) ~= nil
       self.above_idx = cur
       self.above_line = match(line, '^(.-)%s*$')
       return
@@ -41,7 +41,7 @@ end
 -- search down the first nonempty line
 function Del:search_down()
   if self.empty_pre then
-    self.has_right = P:has_right_start(self.cur_line)
+    self.has_right = P:has_right_start(self.cur_line) ~= nil
     self.below_idx = self.line_idx
     self.below_line = self.cur_line
     self.below_right_line = match(self.below_line, '^%s*(.-)%s*$')
@@ -136,20 +136,39 @@ function Del:do_multiline_action(opts)
   func()
 end
 
+function Del:smart_del_one(opts)
+  local indent1
+  if self.has_right then
+    local cur = self.above_idx
+    local min_idx = cur - P.max_search_lines
+    min_idx = min_idx < 0 and 0 or min_idx
+    local ctn = {}
+    while cur >= min_idx do
+      local line = u.get_line(cur)
+      local pair = P:has_left(line, ctn, self.right)
+      if pair then
+        indent1 = u.get_indent_level(line)
+        break
+      end
+      cur = cur - 1
+    end
+  else
+    indent1 = u.get_indent_level(self.above_line)
+  end
+  local indent2 = u.get_indent_level(self.cur_line)
+  if indent2 - indent1 <= opts.trigger_indent_level then
+    self:del_all_blank()
+  else
+    opts.fallback()
+  end
+end
+
 function Del:do_oneline_action(opts)
   local actions = {
     delete_all = function() self:del_all_blank() end,
     leave_zero_above = function() self:leave_zero_above() end,
     leave_zero_below = function() self:leave_zero_below() end,
-    smart = function()
-      local indent1 = u.get_indent_level(self.above_line)
-      local indent2 = u.get_indent_level(self.cur_line)
-      if indent2 - indent1 <= opts.trigger_indent_level then
-        self:del_all_blank()
-      else
-        opts.fallback()
-      end
-    end
+    smart = function() self:smart_del_one(opts) end,
   }
   local func = actions[opts.strategy] or opts.fallback
   func()
