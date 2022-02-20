@@ -87,7 +87,7 @@ local Pairs = {
           fallback = fb.delete_indent,
         },
         one = {
-          strategy = 'smart',
+          strategy = 'leave_zero_above',
           trigger_indent_level = 0,
           fallback = fb.delete,
         },
