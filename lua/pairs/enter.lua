@@ -35,7 +35,7 @@ local function type_aux()
   indent = indent or u.get_indent(left_line)
 
   if left then
-    local cur_indent = right.opts.triplet and indent or indent .. P:get_indent()
+    local cur_indent = left.opts.triplet and indent or indent .. P:get_indent()
     right_line = (right and indent or cur_indent) .. right_line
     vim.api.nvim_set_current_line(left_line)
     vim.fn.append(linenr, right and {cur_indent, right_line} or right_line)
