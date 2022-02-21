@@ -15,9 +15,6 @@ configurable.
 ***Note***: Only support bracket of single char (of multibyte). For multi-char pairs, see snippet
 plugins.
 
-***Note***: After `:PackerCompile`, you need to restart nvim to get the plugin work again.
-[Related issue](https://github.com/ZhiyuanLck/smart-pairs/issues/3).
-
 ## Configuration
 
 Setup the options by
