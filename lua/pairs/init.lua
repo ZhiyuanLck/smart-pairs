@@ -3,7 +3,7 @@ local u = require('pairs.utils')
 local fb = require('pairs.fallback')
 local push = table.insert
 
-local state = {
+local config = {
   pairs = {
     ['*'] = {
       {'(', ')'},
@@ -185,7 +185,7 @@ local state = {
 }
 
 local Pairs = {}
-setmetatable(Pairs, {__index=state})
+setmetatable(Pairs, {__index=config})
 
 -- Pair
 local Pr = {}
@@ -282,7 +282,7 @@ function Pairs:setup(opts)
   self.lr, self.rl = {}, {}
   local new_pairs = {}
 
-  for ft, pairs in pairs(state.pairs) do
+  for ft, pairs in pairs(config.pairs) do
     new_pairs[ft] = {}
     self.lr[ft], self.rl[ft] = {}, {}
 
