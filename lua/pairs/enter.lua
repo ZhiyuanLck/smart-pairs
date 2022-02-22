@@ -4,14 +4,14 @@ local P = require('pairs')
 
 local function type_aux()
   local left_line, right_line = u.get_cursor_lr()
-  -- remove blank spaces
+  --- remove blank spaces
   left_line = left_line:match('(.-)%s*$')
   right_line = right_line:match('^%s*(.-)%s*$')
 
-  -- if have a right bracket just after the cursor
+  --- if have a right bracket just after the cursor
   local right = P:has_right_start(right_line)
 
-  -- find the corresponding left bracket
+  --- find the corresponding left bracket
   local linenr = vim.fn.line('.')
   local cur = linenr - 1
   local line_idx = cur

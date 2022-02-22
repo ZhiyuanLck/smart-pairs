@@ -18,7 +18,7 @@ function Del:new()
   return setmetatable(del, Del)
 end
 
--- search up the first nonempty line
+--- search up the first nonempty line
 function Del:search_up()
   local cur = self.line_idx - 1
   local end_idx = cur - P.max_search_lines
@@ -38,7 +38,7 @@ function Del:search_up()
   self.start_file = true
 end
 
--- search down the first nonempty line
+--- search down the first nonempty line
 function Del:search_down()
   if self.empty_pre then
     self.has_right = P:has_right_start(self.cur_line) ~= nil
@@ -63,13 +63,13 @@ function Del:search_down()
     end
     cur = cur + 1
   end
-  -- end of file
+  --- end of file
   self.has_right = false
   self.below_idx = end_nr
   self.end_file = true
 end
 
--- delete all blanks
+--- delete all blanks
 function Del:del_all_blank()
   if self.start_file then
     u.del_lines(self.above_idx + 1, self.below_idx)
@@ -87,10 +87,10 @@ function Del:del_all_blank()
   end
 end
 
--- delete all but one empty lines
--- @param line string: empty line will be set to line
--- @param col number or string: set the cursor column to col, default at the empty line
--- @param line_offset nubmer: offset of linenr of the cursor, used for option 'one_above' and 'one_below'
+--- delete all but one empty lines
+---@param line string: empty line will be set to line
+---@param col number or string: set the cursor column to col, default at the empty line
+---@param line_offset nubmer: offset of linenr of the cursor, used for option 'one_above' and 'one_below'
 function Del:leave_one(line, col, line_offset)
   u.del_lines(self.above_idx + 2, self.below_idx)
   if not self.start_file then
@@ -198,29 +198,29 @@ end
 local function del_current_line()
   local left_line, right_line = u.get_cursor_lr()
 
-  -- number of chars to be delete on the lef and right
+  --- number of chars to be delete on the lef and right
   local del_l, del_r
   for _, pair in ipairs(P:get_pairs()) do
-    -- local left_blank = left_line:match(u.escape(pair.left) .. '(%s*)$')
+    --- local left_blank = left_line:match(u.escape(pair.left) .. '(%s*)$')
     local left_part, left_blank = left_line:match(fmt('(%s)(%%s*)$', u.escape(pair.left)))
     if not left_blank then goto continue end
     del_l = #left_blank
     local right_blank, right_part = right_line:match(fmt('^(%%s*)(%s)', u.escape(pair.right)))
     del_r = right_blank and #right_blank or #right_line:match('^%s*')
-    if (del_l > 0 and del_r == 0) or (del_l == 1 and del_r == 1) then -- delete all blanks
-    -- leave two blank if has right bracke, otherwise delete all blanks
+    if (del_l > 0 and del_r == 0) or (del_l == 1 and del_r == 1) then --- delete all blanks
+    --- leave two blank if has right bracke, otherwise delete all blanks
     elseif del_l >= 1 and del_r >= 1 then
       del_l = right_blank and del_l - 1 or del_l
       del_r = right_blank and del_r - 1 or del_r
-    elseif right_blank then -- del_l == 0, del bracket
-      -- local lc, rc = P:get_count(left_line, right_line, pair.left, pair.right)
+    elseif right_blank then --- del_l == 0, del bracket
+      --- local lc, rc = P:get_count(left_line, right_line, pair.left, pair.right)
       local lc, rc = P:get_cross_count(pair.left, pair.right)
       del_l = #left_part
-      -- respect balanced pair
+      --- respect balanced pair
       if (pair.opts.balanced and lc % 2 == 1 and rc % 2 == 1) or (not pair.opts.balanced and lc <= rc) then
         del_r = del_r + #right_part
       end
-    else -- del_l == 0, del single bracket
+    else --- del_l == 0, del single bracket
       del_l = #left_part
       del_r = del_r - 1
     end

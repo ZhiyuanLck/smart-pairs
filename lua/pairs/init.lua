@@ -29,7 +29,7 @@ local config = {
     },
     tex = {
       {'$', '$', {cross_line = true}},
-      -- Chinese pairs
+      --- Chinese pairs
       {'（', '）'},
       {'【', '】'},
       {'‘', '’'},
@@ -38,11 +38,11 @@ local config = {
   },
   default_opts = {
     ['*'] = {
-      ignore_pre = '\\\\', -- double backslash or [[\\]]
-      ignore_after = '\\w', -- double backslash or [[\w]]
+      ignore_pre = '\\\\', --- double backslash or [[\\]]
+      ignore_after = '\\w', --- double backslash or [[\w]]
     },
     lua = {
-      ignore_pre = '[%\\\\]' -- double backslash
+      ignore_pre = '[%\\\\]' --- double backslash
     }
   },
   indent = {
@@ -173,7 +173,7 @@ local config = {
     enable_fallback = fb.enter,
   },
   autojump_strategy = {
-    unbalanced = 'right', -- all, right, none
+    unbalanced = 'right', --- all, right, none
   },
   mapping = {
     jump_left_in_any   = '<m-[>',
@@ -187,7 +187,7 @@ local config = {
 local Pairs = {}
 setmetatable(Pairs, {__index=config})
 
--- Pair
+--- Pair
 local Pr = {}
 
 function Pr:new(pair)
@@ -246,10 +246,10 @@ function Pairs:set_buf_keymap()
   end
 end
 
--- set the default value of option if user not provide a value
--- @param ft string: file type
--- @param pair table
--- @param opt_key: option of the pair
+--- set the default value of option if user not provide a value
+---@param ft string: file type
+---@param pair table
+---@param opt_key: option of the pair
 function Pairs:set_default_opts(ft, pair, opt_key)
   if pair.opts[opt_key] then return end
   if self.default_opts[ft] and self.default_opts[ft][opt_key] then
@@ -259,7 +259,7 @@ function Pairs:set_default_opts(ft, pair, opt_key)
   end
 end
 
--- @field pairs table: custom pairs
+---@field pairs table: custom pairs
 function Pairs:setup(opts)
   opts = opts or {}
 
@@ -278,7 +278,7 @@ function Pairs:setup(opts)
     self.default_opts[ft] = default_opts
   end
 
-  -- init pair map
+  --- init pair map
   self.lr, self.rl = {}, {}
   local new_pairs = {}
 
@@ -315,7 +315,7 @@ function Pairs:setup(opts)
 
   self.pairs = new_pairs
 
-  -- merge global pairs to ft_pairs
+  --- merge global pairs to ft_pairs
   for ft, pairs in pairs(self.pairs) do
     if ft ~= '*' then
       for _, pair in ipairs(self.pairs['*']) do
@@ -335,8 +335,8 @@ function Pairs:setup(opts)
   ]])
 end
 
--- given right bracket, get the left one
--- @param right string right bracket
+--- given right bracket, get the left one
+---@param right string right bracket
 function Pairs:get_left(right)
   local ft = vim.o.filetype
   if self.rl[ft] and self.rl[ft][right] then
@@ -348,8 +348,8 @@ function Pairs:get_left(right)
   error(fmt('the right bracket %s is not defined', right))
 end
 
--- given left bracket, get the right one
--- @param left string left bracket
+--- given left bracket, get the right one
+---@param left string left bracket
 function Pairs:get_right(left)
   local ft = vim.o.filetype
   if self.lr[ft] and self.lr[ft][left] then
@@ -372,7 +372,7 @@ function Pairs:get_opts(left)
   error(fmt('the left bracket %s is not defined', left))
 end
 
--- get extra ignore pattern by left bracket
+--- get extra ignore pattern by left bracket
 function Pairs:get_ignore(left)
   local ignore = self:get_opts(left).ignore or {}
   if type(ignore) == 'string' then
@@ -381,7 +381,7 @@ function Pairs:get_ignore(left)
   return ignore
 end
 
--- test whether the left bracket exists
+--- test whether the left bracket exists
 function Pairs:exists(left)
   local ft = vim.o.filetype
   if self.lr[ft] and self.lr[ft][left] then
@@ -398,36 +398,36 @@ function Pairs:get_pairs()
   return self.pairs[ft] or self.pairs['*']
 end
 
--- remove escaped brackets and ignore pattern
--- @param line string: line to be processed
--- @param left string: left bracket
--- @param remove_triplet boolean: whether to remove possible triplet pair, default true
--- @return string: clean line
+--- remove escaped brackets and ignore pattern
+---@param line string: line to be processed
+---@param left string: left bracket
+---@param remove_triplet boolean: whether to remove possible triplet pair, default true
+---@return string: clean line
 function Pairs:clean(line, left, remove_triplet)
-  -- ignore \\
+  --- ignore \\
   line = line:gsub('\\\\', '')
-  -- ignore escaped pair
+  --- ignore escaped pair
   line = line:gsub('\\' .. u.escape(left), '')
   local right = self:get_right(left)
   if right ~= left then
     line = line:gsub('\\' .. u.escape(right), '')
   end
-  -- ignore extra pattern
+  --- ignore extra pattern
   local ignore = self:get_ignore(left)
   for _, pattern in ipairs(ignore) do
     line = line:gsub(u.escape(pattern), '')
   end
-  -- ignore string
+  --- ignore string
   line = line:gsub("\\'", ''):gsub('\\"', '')
   line = line:gsub("'.-'", ''):gsub('".-"', '')
-  -- remove possible triplet
+  --- remove possible triplet
   if remove_triplet or true then
     line = line:gsub('"""', ''):gsub("'''", '')
   end
   return line
 end
 
--- remove all escaped brackets and ignore pattern
+--- remove all escaped brackets and ignore pattern
 function Pairs:clean_all(line)
   line = line:gsub('\\\\', '')
   for _, pair in ipairs(self:get_pairs()) do
@@ -444,10 +444,10 @@ function Pairs:clean_all(line)
   return line
 end
 
--- check if line has extra left bracket by counting the number of left brackets in line
--- @param line string: line to be counted
--- @param ctn table: counter table
--- @param pair table: pair obj
+--- check if line has extra left bracket by counting the number of left brackets in line
+---@param line string: line to be counted
+---@param ctn table: counter table
+---@param pair table: pair obj
 function Pairs:has_left(line, ctn, pair)
   if not line then return false end
   local _line = self:clean_all(line)
@@ -471,9 +471,9 @@ function Pairs:has_left(line, ctn, pair)
   end
 end
 
--- check if line has left bracket at end
--- @param line string: line to be searched
--- @param pair table: pair obj
+--- check if line has left bracket at end
+---@param line string: line to be searched
+---@param pair table: pair obj
 function Pairs:has_left_end(line, pair)
   if not line then return nil end
   local _line = self:clean_all(line)
@@ -491,7 +491,7 @@ function Pairs:has_left_end(line, pair)
   end
 end
 
--- check if line has right bracket at start
+--- check if line has right bracket at start
 function Pairs:has_right_start(line)
   if not line then return false end
   local _line = self:clean_all(line)
@@ -503,10 +503,10 @@ function Pairs:has_right_start(line)
   end
 end
 
--- test whether to ignore the current left bracket
--- @param left_line string: left part of current line separated by the cursor
--- @param left string: left bracket
--- @return boolean
+--- test whether to ignore the current left bracket
+---@param left_line string: left part of current line separated by the cursor
+---@param left string: left bracket
+---@return boolean
 function Pairs:ignore_pre(left_line, left)
   left_line = self:clean(left_line, left)
   local opts = self:get_opts(left)
@@ -515,22 +515,22 @@ function Pairs:ignore_pre(left_line, left)
   return vim.fn.match(left_line, ignore_pre) ~= -1
 end
 
--- test whether to completef the right bracket
--- @param right_line string: left part of current line separated by the cursor
--- @param left string: left bracket
--- @return boolean
+--- test whether to completef the right bracket
+---@param right_line string: left part of current line separated by the cursor
+---@param left string: left bracket
+---@return boolean
 function Pairs:ignore_after(right_line, left)
   right_line = self:clean(right_line, left)
   local opts = self:get_opts(left)
   if not opts.ignore_after then return false end
   local ignore_after = '^' .. opts.ignore_after
-  -- exclude the right bracket or all right brackets will be better ?
-  -- local right = self:get_right(left)
-  -- if right_line:match('^' .. escape(right)) then return false end
+  --- exclude the right bracket or all right brackets will be better ?
+  --- local right = self:get_right(left)
+  --- if right_line:match('^' .. escape(right)) then return false end
   return ignore_after and vim.fn.match(right_line, ignore_after) ~= -1
 end
 
--- get left bracket count on the left and above (limited by max_search_lines)
+--- get left bracket count on the left and above (limited by max_search_lines)
 function Pairs:get_cross_count(left, right, cache)
   local line_idx = vim.fn.line('.') - 1
   local l_idx = line_idx - (self.max_search_lines or 0)
@@ -573,8 +573,8 @@ function Pairs:get_cross_count(left, right, cache)
   return lc, rc
 end
 
--- NOTE: to be removed
--- get left bracket count on the left and the right bracket count on the right
+--- NOTE: to be removed
+--- get left bracket count on the left and the right bracket count on the right
 function Pairs:get_count(left_line, right_line, left, right)
   local l = self:clean(left_line, left)
   local r = self:clean(right_line, left)
@@ -583,10 +583,10 @@ function Pairs:get_count(left_line, right_line, left, right)
   return lc, rc
 end
 
--- count occurrences of bracket, ignore escaped ones
--- @param line string: line to be searched
--- @param bracket: pattern
--- @return number
+--- count occurrences of bracket, ignore escaped ones
+---@param line string: line to be searched
+---@param bracket: pattern
+---@return number
 function Pairs:match_count(line, bracket)
   line = self:clean(line, bracket)
   return u.match_count(line, u.escape(bracket))

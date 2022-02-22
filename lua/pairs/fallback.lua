@@ -30,7 +30,7 @@ function M.delete_indent()
   while (cur >= 0) do
     local indent = u.get_line(cur):match('^%s*')
     if vim.fn.strdisplaywidth(indent) < cur_wd then
-      -- why need extra ()?
+      --- why need extra ()?
       vim.api.nvim_set_current_line((cur_line:gsub('^%s*', indent)))
       u.set_cursor(0, indent)
       return
