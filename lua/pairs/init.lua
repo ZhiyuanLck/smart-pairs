@@ -570,7 +570,7 @@ function Pairs:get_cross_count(left, right, cache)
       rc = rc + (i == rn and count(r[i], true).n or count(r[i], true).m)
     end
   end
-  return lc, rc
+  return lc < 0 and 0 or lc, rc < 0 and 0 or rc
 end
 
 --- NOTE: to be removed
