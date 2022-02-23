@@ -16,29 +16,23 @@ local function type_left_neq(left, right)
     --- local lc, rc = P:get_count(left_line, right_line, left, right)
     local lc, rc = P:get_cross_count(left, right)
     if lc >= rc then
-      --- right_line = right .. right_line
       insert_text = insert_text .. right
     end
   end
 
   u.insert(-1, -1, insert_text)
   u.advance_cursor(left)
-  --- left_line = left_line .. left
-  --- vim.api.nvim_set_current_line(left_line .. right_line)
-  --- local pos = vim.api.nvim_win_get_cursor(0)
-  --- pos[2] = vim.fn.strlen(left_line)
-  --- vim.api.nvim_win_set_cursor(0, pos)
 end
 
 --- action when typeset the right bracket
----@param right bracket
+---@param left string
+---@param right string
 local function type_right_neq(left, right)
   local left_line, right_line = u.get_cursor_lr()
 
   local do_nothing = function()
-    left_line = left_line .. right
-    vim.api.nvim_set_current_line(left_line .. right_line)
-    u.set_cursor(0, left_line)
+    u.insert(-1, -1, right)
+    u.advance_cursor(right)
   end
 
   local ignore_pre = P:ignore_pre(left_line, left)
@@ -62,7 +56,7 @@ local function type_right_neq(left, right)
   if strategy == 'right' then
     local m = right_line:match('^' .. _right)
     if m then
-      u.set_cursor(0, left_line .. m)
+      u.advance_cursor(m)
     else
       do_nothing()
     end
@@ -80,7 +74,7 @@ local function type_right_neq(left, right)
       if n + count.n > 0 then
         local m = line:match('^.-' .. _right)
         if cur == line_idx then
-          u.set_cursor(0, left_line .. m)
+          u.advance_cursor(m)
         else
           u.set_cursor(cur + 1, m)
         end
@@ -99,11 +93,8 @@ end
 ---@param bracket string
 local function type_eq(bracket)
   local left_line, right_line = u.get_cursor_lr()
-  local left_count = P:match_count(left_line, bracket)
-  local right_count = P:match_count(right_line, bracket)
-  local pos = vim.api.nvim_win_get_cursor(0)
 
-  --- process triplet bracket
+  -- process triplet bracket
   if P:get_opts(bracket).triplet then
     local pattern = u.escape(bracket)
     local l = left_line
@@ -117,51 +108,47 @@ local function type_eq(bracket)
     until (n > 2 or i == nil)
     local valid = n == 2 and not right_line:match('^' .. pattern)
     if valid then
-      left_line = left_line .. bracket
-      right_line = string.rep(bracket, 3) .. right_line
-      pos[2] = vim.fn.strlen(left_line)
-      vim.api.nvim_set_current_line(left_line .. right_line)
-      vim.api.nvim_win_set_cursor(0, pos)
+      u.insert(-1, -1, string.rep(bracket, 4))
+      u.advance_cursor(bracket)
       return
     end
   end
 
-  --- complete anothor bracket
+  local left_count = P:match_count(left_line, bracket)
+  local right_count = P:match_count(right_line, bracket)
+
+  -- complete anothor bracket
   local complete = function()
-    left_line = left_line .. bracket
-    pos[2] = vim.fn.strlen(left_line)
+    u.insert(-1, -1, bracket)
+    u.advance_cursor(bracket)
   end
-  --- typeset two brackets
+  -- typeset two brackets
   local typeset = function()
-    right_line = bracket .. right_line
-    complete()
+    u.insert(-1, -1, bracket .. bracket)
+    u.advance_cursor(bracket)
   end
 
   local ignore_pre = P:ignore_pre(left_line, bracket)
-  --- not consider ignore_after
-  --- local ignore_after = self:ignore_after(right_line, bracket)
+  -- not consider ignore_after
+  -- local ignore_after = self:ignore_after(right_line, bracket)
 
-  --- number of brackets of current line is odd, always complete
+  -- number of brackets of current line is odd, always complete
   if ignore_pre or (left_count + right_count) % 2 == 1 then
     complete()
-  --- number of brackets of current line is even
-  --- number of brackets of left side is even, which means the right side is also even
-  --- typeset two brackets
-  elseif left_count % 2 == 0 then --- typeset all
+  -- number of brackets of current line is even
+  -- number of brackets of left side is even, which means the right side is also even
+  -- typeset two brackets
+  elseif left_count % 2 == 0 then -- typeset all
     typeset()
-  --- left side is odd and right side is odd, which means you are inside the bracket scope
+  -- left side is odd and right side is odd, which means you are inside the bracket scope
   else
-    local i, j = right_line:find(bracket)
-    --- jump only if the right bracket is next to the cursor
-    if i == 1 then
-      pos[2] = pos[2] + vim.fn.strlen(right_line:sub(1, j))
-    else --- typeset two brackets
+    -- jump only if the right bracket is next to the cursor
+    if right_line:match('^' .. u.escape(bracket)) then
+      u.advance_cursor(bracket)
+    else -- typeset two brackets
       typeset()
     end
   end
-
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  vim.api.nvim_win_set_cursor(0, pos)
 end
 
 function M.type_left(left)
@@ -186,7 +173,6 @@ end
 
 --- test whether line contain key and return match cursor col
 ---@param line string
----@param line_idx number: 0-based index of line
 ---@param format string: detail search pattern
 ---@param key string: key to be searched
 ---@param left_line string: left line to be concated to get the cursor col
