@@ -4,24 +4,30 @@ local u = require('pairs.utils')
 local P = require('pairs')
 
 --- action when typeset the left bracket
+---@param left string: left bracket
+---@param right string: right bracket
 local function type_left_neq(left, right)
   local left_line, right_line = u.get_cursor_lr()
   local ignore_pre = P:ignore_pre(left_line, left)
   local ignore_after = P:ignore_after(right_line, left)
+  local insert_text = left
 
   if not ignore_pre and not ignore_after then
     --- local lc, rc = P:get_count(left_line, right_line, left, right)
     local lc, rc = P:get_cross_count(left, right)
     if lc >= rc then
-      right_line = right .. right_line
+      --- right_line = right .. right_line
+      insert_text = insert_text .. right
     end
   end
 
-  left_line = left_line .. left
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  local pos = vim.api.nvim_win_get_cursor(0)
-  pos[2] = vim.fn.strlen(left_line)
-  vim.api.nvim_win_set_cursor(0, pos)
+  u.insert(-1, -1, insert_text)
+  u.advance_cursor(left)
+  --- left_line = left_line .. left
+  --- vim.api.nvim_set_current_line(left_line .. right_line)
+  --- local pos = vim.api.nvim_win_get_cursor(0)
+  --- pos[2] = vim.fn.strlen(left_line)
+  --- vim.api.nvim_win_set_cursor(0, pos)
 end
 
 --- action when typeset the right bracket

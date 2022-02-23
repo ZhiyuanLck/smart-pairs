@@ -1,6 +1,8 @@
 local M = {}
 local fmt = string.format
 local rep = string.rep
+local api = vim.api
+local fn = vim.fn
 
 --- delete lines of [idx1, idx2), idx1 and idx2 is 0-based index
 ---@param idx1 number
@@ -16,26 +18,50 @@ end
 --- get line whose index is idx (0-based)
 ---@return string: line
 function M.get_line(idx)
-  return vim.api.nvim_buf_get_lines(0, idx, idx + 1, true)[1]
+  return api.nvim_buf_get_lines(0, idx, idx + 1, true)[1]
 end
 
 --- set line whose index is idx (0-based)
 function M.set_line(idx, line)
-  vim.api.nvim_buf_set_lines(0, idx, idx + 1, true, {line})
+  api.nvim_buf_set_lines(0, idx, idx + 1, true, {line})
+end
+
+--- insert text at the given position
+---@param row number: 0-based line index
+---@param col number or string: 0-based col index or string to count the length
+---@param text string
+function M.insert(row, col, text)
+  row = row < 0 and fn.line('.') or row
+  if type(col) == 'string' then
+    col = fn.strlen(col)
+  elseif col < 0 then
+    col = fn.col('.')
+  end
+  row = row - 1
+  col = col - 1
+  api.nvim_buf_set_text(0, row, col, row, col, {text})
+end
+
+--- Advance current cursor by str
+---@param str string
+function M.advance_cursor(str)
+  local pos = api.nvim_win_get_cursor(0)
+  pos[2] = pos[2] + fn.strlen(str)
+  api.nvim_win_set_cursor(0, pos)
 end
 
 function M.feedkeys(keys, mode)
   mode = mode or 'n'
-  keys = vim.api.nvim_replace_termcodes(keys, true, false, true)
-  vim.api.nvim_feedkeys(keys, mode, true)
+  keys = api.nvim_replace_termcodes(keys, true, false, true)
+  api.nvim_feedkeys(keys, mode, true)
 end
 
 --- get the indent level of str in vim
 ---@param str string
 ---@return number: indent level
 function M.get_indent_level(str)
-  local indent = vim.fn.strdisplaywidth("\t")
-  local cur_indent = vim.fn.strdisplaywidth(str:match('^%s*'))
+  local indent = fn.strdisplaywidth("\t")
+  local cur_indent = fn.strdisplaywidth(str:match('^%s*'))
   return (cur_indent - cur_indent % indent) / indent
 end
 
@@ -44,9 +70,9 @@ end
 ---  number: column number
 ---  string: set the cursor column at the end of string
 function M.set_cursor(line, col)
-  line = line == 0 and vim.fn.line('.') or line
-  if type(col) == 'string' then col = vim.fn.strlen(col) end
-  vim.api.nvim_win_set_cursor(0, {line, col})
+  line = line == 0 and fn.line('.') or line
+  if type(col) == 'string' then col = fn.strlen(col) end
+  api.nvim_win_set_cursor(0, {line, col})
 end
 
 --- merge two opts table
@@ -63,24 +89,24 @@ end
 
 ---@return left part of line separated by cursor
 function M.get_cursor_l()
-  local col = vim.fn.col('.') - 1
-  local line = vim.api.nvim_get_current_line()
-  return vim.fn.strpart(line, 0, col)
+  local col = fn.col('.') - 1
+  local line = api.nvim_get_current_line()
+  return fn.strpart(line, 0, col)
 end
 
 ---@return right part of line separated by cursor
 function M.get_cursor_r()
-  local col = vim.fn.col('.') - 1
-  local line = vim.api.nvim_get_current_line()
-  return vim.fn.strpart(line, col)
+  local col = fn.col('.') - 1
+  local line = api.nvim_get_current_line()
+  return fn.strpart(line, col)
 end
 
 ---@return left and right part of line separated by cursor
 function M.get_cursor_lr()
-  local col = vim.fn.col('.') - 1
-  local line = vim.api.nvim_get_current_line()
-  local left_line = vim.fn.strpart(line, 0, col)
-  local right_line = vim.fn.strpart(line, col)
+  local col = fn.col('.') - 1
+  local line = api.nvim_get_current_line()
+  local left_line = fn.strpart(line, 0, col)
+  local right_line = fn.strpart(line, col)
   return left_line, right_line
 end
 
