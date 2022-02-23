@@ -27,6 +27,12 @@ local config = {
     markdown = {
       {'`', '`', {triplet = true}},
     },
+    html = {
+      {'<', '>'}
+    },
+    xml = {
+      {'<', '>'}
+    },
     tex = {
       {'$', '$', {cross_line = true}},
       --- Chinese pairs

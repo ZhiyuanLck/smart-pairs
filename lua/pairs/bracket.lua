@@ -250,7 +250,6 @@ function M.jump_right(opts)
       local min
       for _, pair in ipairs(P:get_pairs()) do
         local tmp_line, tmp_left_line = trim(pair.right)
-        --- print(pair.right, line, left_line, tmp_line, tmp_left_line)
         local col = match_col(tmp_line, format, pair.right, tmp_left_line)
         if col and (not min or col < min) then min = col end
       end
