@@ -178,7 +178,13 @@ function Del:del_blank()
   local opts = self.empty_pre and P.delete.empty_pre or P.delete.empty_line
   self:search_down()
   self:search_up()
-  self.gap = self.below_idx - self.above_idx - 1
+  if self.has_left or self.has_right then
+    self.gap = self.below_idx - self.above_idx - 1
+  elseif self.empty_pre then
+    self.gap = self.line_idx - self.above_idx - 1
+  else
+    self.gap = self.line_idx - self.above_idx
+  end
 
   if self.has_left then
     opts = self.has_right and opts.bracket_bracket or opts.bracket_text

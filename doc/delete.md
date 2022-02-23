@@ -15,7 +15,8 @@ right bracket below:
 - `bracket_bracket`: brackets above and below
 - `bracket_text`: bracket above and text below
 - `text_bracket`: text above and bracket below
-- `text_text`: text above and below
+- `text_text`: text above and below, note that in this mode, number of empty lines is counted from
+  the first nonempty line above until the current line rather than the first nonempty line below
 
 Each subcase is divided to
 

@@ -101,7 +101,7 @@ local config = {
         one = {
           strategy = nil,
           trigger_indent_level = 0,
-          fallback = fb.delete,
+          fallback = fb.delete_indent,
         },
       },
     },
