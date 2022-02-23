@@ -249,12 +249,12 @@ end
 --- set the default value of option if user not provide a value
 ---@param ft string: file type
 ---@param pair table
----@param opt_key: option of the pair
+---@param opt_key table: option of the pair
 function Pairs:set_default_opts(ft, pair, opt_key)
-  if pair.opts[opt_key] then return end
-  if self.default_opts[ft] and self.default_opts[ft][opt_key] then
+  if pair.opts[opt_key] ~= nil then return end
+  if self.default_opts[ft] ~= nil and self.default_opts[ft][opt_key] ~= nil then
     pair.opts[opt_key] = self.default_opts[ft][opt_key]
-  elseif self.default_opts['*'] and self.default_opts['*'][opt_key] then
+  elseif self.default_opts['*'] ~= nil and self.default_opts['*'][opt_key] ~= nil then
     pair.opts[opt_key] = self.default_opts['*'][opt_key]
   end
 end
@@ -293,15 +293,15 @@ function Pairs:setup(opts)
       self:set_default_opts(ft, pair, 'ignore_after')
       self:set_default_opts(ft, pair, 'triplet')
 
-      if not pair.opts.ignore then
+      if pair.opts.ignore == nil then
         pair.opts.ignore = {'\\' .. pair.left, '\\' .. pair.right}
       end
 
-      if not pair.opts.cross_line then
+      if pair.opts.cross_line == nil then
         pair.opts.cross_line = pair.left ~= pair.right
       end
 
-      if not pair.opts.enable_smart_space then
+      if pair.opts.enable_smart_space == nil then
         pair.opts.enable_smart_space = pair.left ~= pair.right
       end
 
