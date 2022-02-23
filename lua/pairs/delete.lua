@@ -1,6 +1,7 @@
 local P     = require('pairs')
 local u     = require('pairs.utils')
-local fb    = require('pairs.fallback')
+local fn    = vim.fn
+local api   = vim.api
 local fmt   = string.format
 local match = string.match
 
@@ -10,8 +11,8 @@ Del.__index = Del
 
 function Del:new()
   local del = {}
-  del.line_idx = vim.fn.line('.') - 1
-  del.cur_line = vim.api.nvim_get_current_line()
+  del.line_idx = fn.line('.') - 1
+  del.cur_line = api.nvim_get_current_line()
   del.left_line, del.right_line = u.get_cursor_lr()
   del.empty_line = match(del.cur_line, '^%s*$') ~= nil
   del.empty_pre = not del.empty_line and match(del.left_line, '^%s*$') ~= nil
@@ -48,7 +49,7 @@ function Del:search_down()
     return
   end
   local cur =  self.line_idx + 1
-  local end_nr = vim.fn.line('$')
+  local end_nr = fn.line('$')
   local end_idx = cur + P.max_search_lines
   if end_idx >= end_nr then end_idx = end_nr - 1 end
   while cur <= end_idx do
@@ -90,7 +91,7 @@ end
 --- delete all but one empty lines
 ---@param line string: empty line will be set to line
 ---@param col number or string: set the cursor column to col, default at the empty line
----@param line_offset nubmer: offset of linenr of the cursor, used for option 'one_above' and 'one_below'
+---@param line_offset number: offset of linenr of the cursor, used for option 'one_above' and 'one_below'
 function Del:leave_one(line, col, line_offset)
   u.del_lines(self.above_idx + 2, self.below_idx)
   if not self.start_file then
@@ -242,8 +243,15 @@ local function del_current_line()
   ::finish::
   if del_l > 0 then left_line = left_line:sub(1, #left_line - del_l) end
   if del_r > 0 then right_line = right_line:sub(del_r + 1) end
-  vim.api.nvim_set_current_line(left_line .. right_line:match('(.-)%s*$'))
+  local idx = fn.line('.') - 1
+  api.nvim_buf_set_text(0, idx, fn.strlen(left_line), idx, fn.col('$') - fn.strlen(right_line) - 1, {''})
   u.set_cursor(0, left_line)
+  -- remove possible trailing spaces
+  local line = api.nvim_get_current_line()
+  local m = line:match('(.-)%s+$')
+  if m then
+    api.nvim_buf_set_text(0, idx, fn.strlen(m), idx, fn.strlen(line), {''})
+  end
 end
 
 function Del.type()

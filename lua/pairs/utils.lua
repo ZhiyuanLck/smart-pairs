@@ -26,20 +26,51 @@ function M.set_line(idx, line)
   api.nvim_buf_set_lines(0, idx, idx + 1, true, {line})
 end
 
+--- get the col index
+---@param col number or string
+---@return number
+local function get_col(col)
+  if type(col) == 'string' then
+    return fn.strlen(col) - 1
+  elseif col < 0 then
+    return fn.col('.') - 1
+  end
+  error('col should be a number or string')
+end
+
+--- get the row index
+---@param row number
+---@return number
+local function get_row(row)
+  return row < 0 and fn.line('.') - 1 or row
+end
+
+--- get the replace text
+---@param text string or table
+---@return table
+local function get_text(text)
+  if type(text) == 'string' then return {text} end
+  return text
+end
+
+--- wrapper of nvim_buf_set_text
+---@param start_row number
+---@param start_col number or string
+---@param end_row number
+---@param end_col number or string
+---@param text table or string
+function M.set_text(start_row, start_col, end_row, end_col, text)
+  api.nvim_buf_set_text(0, get_row(start_row), get_col(start_col), get_row(end_row), get_col(end_col), get_text(text))
+end
+
 --- insert text at the given position
 ---@param row number: 0-based line index
 ---@param col number or string: 0-based col index or string to count the length
 ---@param text string
 function M.insert(row, col, text)
-  row = row < 0 and fn.line('.') or row
-  if type(col) == 'string' then
-    col = fn.strlen(col)
-  elseif col < 0 then
-    col = fn.col('.')
-  end
-  row = row - 1
-  col = col - 1
-  api.nvim_buf_set_text(0, row, col, row, col, {text})
+  row = get_row(row)
+  col = get_col(col)
+  api.nvim_buf_set_text(0, row, col, row, col, get_text(text))
 end
 
 --- Advance current cursor by str
