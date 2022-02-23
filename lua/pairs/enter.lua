@@ -1,6 +1,9 @@
 local M = {}
 local u = require('pairs.utils')
 local P = require('pairs')
+local fn = vim.fn
+local api = vim.api
+local push = table.insert
 
 local function type_aux()
   local left_line, right_line = u.get_cursor_lr()
@@ -12,7 +15,7 @@ local function type_aux()
   local right = P:has_right_start(right_line)
 
   --- find the corresponding left bracket
-  local linenr = vim.fn.line('.')
+  local linenr = fn.line('.')
   local cur = linenr - 1
   local line_idx = cur
   local min_idx = cur - P.max_search_lines
@@ -34,14 +37,16 @@ local function type_aux()
   end
   indent = indent or u.get_indent(left_line)
 
+  local l = fn.strlen(left_line)
+  local r = fn.col('$') - fn.strlen(right_line) - 1
   if left then
     local cur_indent = left.opts.triplet and indent or indent .. P:get_indent()
-    right_line = (right and indent or cur_indent) .. right_line
-    vim.api.nvim_set_current_line(left_line)
-    vim.fn.append(linenr, right and {cur_indent, right_line} or right_line)
+    local insert_text = {'', cur_indent}
+    if right then push(insert_text, indent) end
+    api.nvim_buf_set_text(0, line_idx, l, line_idx, r, insert_text)
     u.set_cursor(linenr + 1, cur_indent)
   else
-    vim.api.nvim_set_current_line(left_line .. right_line)
+    api.nvim_buf_set_text(0, line_idx, l, line_idx, r, {''})
     u.set_cursor(linenr, left_line)
     u.feedkeys('<cr>')
   end
