@@ -5,20 +5,16 @@ local fb = require('pairs.fallback')
 
 local function type_aux()
   local left_line, right_line = u.get_cursor_lr()
-
   for _, pair in ipairs(P:get_pairs()) do
-    local pl = u.escape(pair.left) .. '$'
-    local pr = '^' .. u.escape(pair.right)
-    if left_line:match(pl) and right_line:match(pr) then
-      if not pair.opts.enable_smart_space then
-        fb.space()
-        return
-      end
+    if pair.opts.enable_smart_space and
+      left_line:match(u.escape(pair.left) .. '$') and
+      right_line:match('^' .. u.escape(pair.right)) then
       u.insert(-1, -1, '  ')
       u.advance_cursor(' ')
       return
     end
   end
+  fb.space()
 end
 
 function M.type()
