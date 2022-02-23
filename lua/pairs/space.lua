@@ -14,14 +14,11 @@ local function type_aux()
         fb.space()
         return
       end
-      right_line = ' ' .. right_line
-      break
+      u.insert(-1, -1, '  ')
+      u.advance_cursor(' ')
+      return
     end
   end
-
-  left_line = left_line .. ' '
-  vim.api.nvim_set_current_line(left_line .. right_line)
-  u.set_cursor(0, left_line)
 end
 
 function M.type()
