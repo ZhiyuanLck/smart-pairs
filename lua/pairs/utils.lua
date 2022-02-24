@@ -31,7 +31,7 @@ end
 ---@return number
 local function get_col(col)
   if type(col) == 'string' then
-    return fn.strlen(col) - 1
+    return fn.strlen(col)
   end
   return col < 0 and fn.col('.') - 1 or col
 end
