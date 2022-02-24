@@ -246,12 +246,7 @@ local function del_current_line()
   local idx = fn.line('.') - 1
   api.nvim_buf_set_text(0, idx, fn.strlen(left_line), idx, fn.col('$') - fn.strlen(right_line) - 1, {''})
   u.set_cursor(0, left_line)
-  -- remove possible trailing spaces
-  local line = api.nvim_get_current_line()
-  local m = line:match('(.-)%s+$')
-  if m then
-    api.nvim_buf_set_text(0, idx, fn.strlen(m), idx, fn.strlen(line), {''})
-  end
+  u.remove_trailing_spaces()
 end
 
 function Del.type()

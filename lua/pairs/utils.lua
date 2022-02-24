@@ -150,6 +150,17 @@ function M.escape(str)
   return str
 end
 
+--- remove possible trailing spaces
+---@param idx number: 0-based line index
+function M.remove_trailing_spaces(idx)
+  idx = idx or fn.line('.') - 1
+  local line = api.nvim_get_current_line()
+  local m = line:match('(.-)%s+$')
+  if m then
+    api.nvim_buf_set_text(0, idx, fn.strlen(m), idx, fn.strlen(line), {''})
+  end
+end
+
 --- count the number of left brackets with remove of corresponding pairs
 ---@param str string
 ---@param left string: left bracket

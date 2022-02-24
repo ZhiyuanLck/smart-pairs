@@ -9,7 +9,7 @@ local function type_aux()
   local left_line, right_line = u.get_cursor_lr()
   --- remove blank spaces
   left_line = left_line:match('(.-)%s*$')
-  right_line = right_line:match('^%s*(.-)%s*$')
+  right_line = right_line:match('^%s*(.-)$')
 
   --- if have a right bracket just after the cursor
   local right = P:has_right_start(right_line)
@@ -44,9 +44,11 @@ local function type_aux()
     local insert_text = {'', cur_indent}
     if right then push(insert_text, indent) end
     api.nvim_buf_set_text(0, line_idx, l, line_idx, r, insert_text)
+    u.remove_trailing_spaces(right and line_idx + 2 or line_idx + 1)
     u.set_cursor(linenr + 1, cur_indent)
   else
     api.nvim_buf_set_text(0, line_idx, l, line_idx, r, {''})
+    u.remove_trailing_spaces()
     u.set_cursor(linenr, left_line)
     u.feedkeys('<cr>')
   end
