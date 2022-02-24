@@ -154,7 +154,7 @@ function M.remove_trailing_spaces(idx)
   idx = idx or fn.line('.') - 1
   local line = api.nvim_get_current_line()
   local m = line:match('(.-)%s+$')
-  if m then
+  if m and m ~= '' then
     api.nvim_buf_set_text(0, idx, fn.strlen(m), idx, fn.strlen(line), {''})
   end
 end
