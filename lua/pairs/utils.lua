@@ -32,10 +32,8 @@ end
 local function get_col(col)
   if type(col) == 'string' then
     return fn.strlen(col) - 1
-  elseif col < 0 then
-    return fn.col('.') - 1
   end
-  error('col should be a number or string')
+  return col < 0 and fn.col('.') - 1 or col
 end
 
 --- get the row index
