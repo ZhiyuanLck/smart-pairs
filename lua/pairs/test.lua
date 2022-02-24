@@ -20,6 +20,7 @@ end
 ---@param ft string
 function M.init_buf(input, line, col, ft)
   local buf = api.nvim_create_buf(false, true)
+  col = col or input
   api.nvim_command('buffer ' .. buf)
   if ft then
     api.nvim_buf_set_option(buf, 'filetype', ft)
@@ -34,6 +35,7 @@ end
 ---@param line number: 0-based line index
 ---@param col string or number
 function M.check_buf(expect, line, col)
+  col = col or expect
   expect = vim.split(expect, '\n')
   local buf_lines = M.get_buf_lines()
   assert.are.same(expect, buf_lines)
