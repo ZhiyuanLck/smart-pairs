@@ -1,0 +1,67 @@
+local t = require('pairs.test')
+local b = require('pairs.bracket')
+
+describe('unbalanced right bracket', function()
+  before_each(function()
+    require('pairs'):setup()
+  end)
+
+  after_each(function()
+    vim.cmd('bdelete')
+  end)
+
+  it("Should typeset one", function()
+    t.init_buf('"', 0, 1)
+    b.type_left('"')
+    t.check_buf('""', 0, 2)
+  end)
+
+  it("Should ignore prefix pattern and typeset one", function()
+    t.init_buf('\\', 0, 1)
+    b.type_left('"')
+    t.check_buf('\\"', 0, 2)
+  end)
+
+  it("Should ignore escaped pair and typeset one", function()
+    t.init_buf('\\""', 0, 0)
+    b.type_left('"')
+    t.check_buf('"\\""', 0, 1)
+  end)
+
+  it("Should ignore escaped pair and typeset two", function()
+    t.init_buf('\\"', 0, 0)
+    b.type_left('"')
+    t.check_buf('""\\"', 0, 1)
+  end)
+
+  it("Should typeset two", function()
+    t.init_buf('', 0, 0)
+    b.type_left('"')
+    t.check_buf('""', 0, 1)
+  end)
+
+  it("Should typeset two outside", function()
+    t.init_buf('', 0, 0)
+    b.type_left('"')
+    t.check_buf('""', 0, 1)
+  end)
+
+  it("Should typeset two outside", function()
+    t.init_buf('""""', 0, 2)
+    b.type_left('"')
+    t.check_buf('""""""', 0, 3)
+  end)
+
+  it("Should typeset two inside", function()
+    t.init_buf('"a"', 0, 1)
+    b.type_left('"')
+    t.check_buf('"""a"', 0, 2)
+  end)
+
+  it("Should typeset three", function()
+    t.init_buf('""', 0, 2, 'python')
+    b.type_left('"')
+    t.check_buf('""""""', 0, 3)
+  end)
+
+end)

@@ -57,6 +57,12 @@ describe('unbalanced right bracket', function()
     t.check_buf('()\\)', 0, 2)
   end)
 
+  it("Should ignore prefix pattern and typeset the right bracket", function()
+    t.init_buf('(\\)', 0, 2)
+    b.type_right(')')
+    t.check_buf('(\\))', 0, 3)
+  end)
+
   it("Should typeset the right bracket with unknown strategy", function()
     P.autojump_strategy.unbalanced = "none"
     t.init_buf('()', 0, 1)
