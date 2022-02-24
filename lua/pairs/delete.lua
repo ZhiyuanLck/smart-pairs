@@ -208,30 +208,46 @@ local function del_current_line()
   --- number of chars to be delete on the lef and right
   local del_l, del_r
   for _, pair in ipairs(P:get_pairs()) do
-    --- local left_blank = left_line:match(u.escape(pair.left) .. '(%s*)$')
-    local left_part, left_blank = left_line:match(fmt('(%s)(%%s*)$', u.escape(pair.left)))
-    if not left_blank then goto continue end
-    del_l = #left_blank
-    local right_blank, right_part = right_line:match(fmt('^(%%s*)(%s)', u.escape(pair.right)))
-    del_r = right_blank and #right_blank or #right_line:match('^%s*')
-    if (del_l > 0 and del_r == 0) or (del_l == 1 and del_r == 1) then --- delete all blanks
-    --- leave two blank if has right bracke, otherwise delete all blanks
-    elseif del_l >= 1 and del_r >= 1 then
-      del_l = right_blank and del_l - 1 or del_l
-      del_r = right_blank and del_r - 1 or del_r
-    elseif right_blank then --- del_l == 0, del bracket
-      --- local lc, rc = P:get_count(left_line, right_line, pair.left, pair.right)
-      local lc, rc = P:get_cross_count(pair.left, pair.right)
-      del_l = #left_part
-      --- respect balanced pair
-      if (pair.opts.balanced and lc % 2 == 1 and rc % 2 == 1) or (not pair.opts.balanced and lc <= rc) then
-        del_r = del_r + #right_part
+    if pair.balanced then
+      local bracket = u.escape(pair.left)
+      local left_part = left_line:match(fmt('(.*)%s$', bracket))
+      if not left_part then goto continue end
+      local right_part = right_line:match(fmt('^%s(.*)', bracket))
+      local lc, rc = P:get_count(left_line, right_line, pair.left, pair.right)
+      if (lc + rc) % 2 == 1 or (lc % 2 == 1) or not right_part then
+        u.set_text(-1, fn.strlen(left_part), -1, fn.strlen(left_line), '')
+        u.set_cursor(0, left_part)
+      else
+        u.set_text(-1, fn.strlen(left_part), -1, fn.strlen(left_line) + fn.strlen(pair.left), '')
+        u.set_cursor(0, left_part)
       end
-    else --- del_l == 0, del single bracket
-      del_l = #left_part
-      del_r = del_r - 1
+      return
+    else
+      local left_part, left_blank = left_line:match(fmt('(%s)(%%s*)$', u.escape(pair.left)))
+      if not left_blank then goto continue end
+      del_l = #left_blank
+      local right_blank, right_part = right_line:match(fmt('^(%%s*)(%s)', u.escape(pair.right)))
+      del_r = right_blank and #right_blank or #right_line:match('^%s*')
+      if (del_l > 0 and del_r == 0) or (del_l == 1 and del_r == 1) then --- delete all blanks
+      --- leave two blank if has right bracke, otherwise delete all blanks
+      elseif del_l >= 1 and del_r >= 1 then
+        del_l = right_blank and del_l - 1 or del_l
+        del_r = right_blank and del_r - 1 or del_r
+      elseif right_blank then --- del_l == 0, del bracket
+        --- local lc, rc = P:get_count(left_line, right_line, pair.left, pair.right)
+        local lc, rc = P:get_cross_count(pair.left, pair.right)
+        del_l = #left_part
+        --- respect balanced pair
+        if (pair.opts.balanced and lc % 2 == 1 and rc % 2 == 1) or (not pair.opts.balanced and lc <= rc) then
+          del_r = del_r + #right_part
+        end
+      else --- del_l == 0, del single bracket
+        del_l = #left_part
+        del_r = del_r - 1
+      end
+      goto finish
+      return
     end
-    goto finish
     ::continue::
   end
 
