@@ -99,15 +99,15 @@ local config = {
         },
       },
       text_text = {
-        fallback = fb.delete_indent,
+        fallback = fb.delete,
         multi = {
-          strategy = 'leave_one_above',
-          fallback = fb.delete_indent,
+          strategy = nil,
+          fallback = fb.delete,
         },
         one = {
           strategy = nil,
           trigger_indent_level = 0,
-          fallback = fb.delete_indent,
+          fallback = fb.delete,
         },
       },
     },
@@ -151,10 +151,10 @@ local config = {
         },
       },
       text_text = {
-        fallback = fb.delete_indent,
+        fallback = fb.delete,
         multi = {
-          strategy = 'leave_one_cur',
-          fallback = fb.delete_indent,
+          strategy = nil,
+          fallback = fb.delete,
         },
         one = {
           strategy = nil,
