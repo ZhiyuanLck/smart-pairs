@@ -7,6 +7,9 @@ assignees: ''
 
 ---
 
+**Ensure that you use the latest version of the plugin**
+- [ ] Update the plugin by `:PackerUpdate` or run `git pull` under the plugin directory
+
 **Describe the bug**
 A clear and concise description of what the bug is. For example, right bracket is not jumped as expected.
 
