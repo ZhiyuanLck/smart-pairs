@@ -191,7 +191,6 @@ local config = {
 }
 
 local Pairs = {}
-setmetatable(Pairs, {__index=config})
 
 --- Pair
 local Pr = {}
@@ -268,6 +267,10 @@ end
 ---@field pairs table: custom pairs
 function Pairs:setup(opts)
   opts = opts or {}
+  local base_config = vim.deepcopy(config)
+  for k, v in pairs(base_config) do
+    self[k] = v
+  end
 
   u.check_opts(opts)
   u.merge(self.delete, opts.delete)
@@ -290,7 +293,7 @@ function Pairs:setup(opts)
   self.lr, self.rl = {}, {}
   local new_pairs = {}
 
-  for ft, pairs in pairs(config.pairs) do
+  for ft, pairs in pairs(self.pairs) do
     new_pairs[ft] = {}
     self.lr[ft], self.rl[ft] = {}, {}
 
