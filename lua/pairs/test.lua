@@ -4,7 +4,7 @@ local api = vim.api
 local u = require('pairs.utils')
 
 --- get the col index
----@param col number or string
+---@param col number | string
 ---@return number
 function M.get_col(col)
   if type(col) == 'string' then
@@ -13,27 +13,26 @@ function M.get_col(col)
   return col < 0 and fn.col('.') - 1 or col
 end
 
---- initialize the buffer with the input and the cursor
----@param input string
----@param line number: 0-based line index
----@param col string or number
----@param ft string
-function M.init_buf(input, line, col, ft)
+--- initialize the buffer
+function M.init_buf()
   local buf = api.nvim_create_buf(false, true)
-  col = col or input
   api.nvim_command('buffer ' .. buf)
-  if ft then
-    api.nvim_buf_set_option(buf, 'filetype', ft)
-  end
   api.nvim_command('startinsert')
+end
+
+--- set the buffer with the input and the cursor
+---@param input string
+---@param line number @0-based line index
+---@param col string | number @0-based column index
+function M.set_buf(input, line, col)
   api.nvim_buf_set_lines(0, 0, -1, true, vim.split(input, '\n'))
-  u.set_cursor(line + 1, M.get_col(col))
+  u.set_cursor(line + 1, M.get_col(col or input))
 end
 
 --- check the buffer with the expected string and the cursor
 ---@param expect string
----@param line number: 0-based line index
----@param col string or number
+---@param line number @0-based line index
+---@param col string | number
 function M.check_buf(expect, line, col)
   col = col or expect
   expect = vim.split(expect, '\n')

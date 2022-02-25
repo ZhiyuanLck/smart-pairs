@@ -4,6 +4,7 @@ local P = require('pairs')
 
 describe('unbalanced right bracket', function()
   before_each(function()
+    t.init_buf()
     require('pairs'):setup()
   end)
 
@@ -12,19 +13,19 @@ describe('unbalanced right bracket', function()
   end)
 
   it("Should typeset one space", function()
-    t.init_buf('', 0, 0)
+    t.set_buf('', 0, 0)
     s.type()
     t.check_buf(' ', 0, 1)
   end)
 
   it("Should typeset one space inside bracket", function()
-    t.init_buf('( )', 0, 1)
+    t.set_buf('( )', 0, 1)
     s.type()
     t.check_buf('(  )', 0, 2)
   end)
 
   it("Should typeset one space inside string", function()
-    t.init_buf('""', 0, 1)
+    t.set_buf('""', 0, 1)
     s.type()
     t.check_buf('" "', 0, 2)
   end)
@@ -37,13 +38,13 @@ describe('unbalanced right bracket', function()
         }
       }
     }
-    t.init_buf('()', 0, 1)
+    t.set_buf('()', 0, 1)
     s.type()
     t.check_buf('( )', 0, 2)
   end)
 
   it("Should typeset two space inside bracket", function()
-    t.init_buf('()', 0, 1)
+    t.set_buf('()', 0, 1)
     s.type()
     t.check_buf('(  )', 0, 2)
   end)
