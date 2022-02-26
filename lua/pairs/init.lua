@@ -410,29 +410,33 @@ function Pairs:get_pairs()
 end
 
 --- remove escaped brackets and ignore pattern
----@param line string: line to be processed
----@param left string: left bracket
----@param remove_triplet boolean: whether to remove possible triplet pair, default true
----@return string: clean line
+---@param line string @line to be processed
+---@param left string @left bracket
+---@param remove_triplet boolean @whether to remove possible triplet pair, default true
+---@return string @clean line
 function Pairs:clean(line, left, remove_triplet)
-  --- ignore \\
+  -- ignore \\
   line = line:gsub('\\\\', '')
-  --- ignore escaped pair
+  -- ignore escaped pair
   line = line:gsub('\\' .. u.escape(left), '')
   local right = self:get_right(left)
   if right ~= left then
     line = line:gsub('\\' .. u.escape(right), '')
   end
-  --- ignore extra pattern
+  -- ignore extra pattern
   local ignore = self:get_ignore(left)
   for _, pattern in ipairs(ignore) do
     line = line:gsub(u.escape(pattern), '')
   end
-  --- ignore string
-  line = line:gsub("\\'", ''):gsub('\\"', '')
-  line = line:gsub("'.-'", ''):gsub('".-"', '')
-  --- remove possible triplet
-  if remove_triplet or true then
+  -- ignore string
+  if left ~= '"' then
+    line = line:gsub('\\"', ''):gsub('".-"', '')
+  end
+  if left ~= "'" then
+    line = line:gsub("\\'", ''):gsub("'.-'", '')
+  end
+  -- remove possible triplet
+  if remove_triplet == nil or remove_triplet then
     line = line:gsub('"""', ''):gsub("'''", '')
   end
   return line
