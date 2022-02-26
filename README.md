@@ -1,3 +1,13 @@
+# Announcement
+
+The code now is like a mess and I need to add tests for all the code.
+
+The feature request and the bug report will not be processed until the refactor work is done.
+
+Do not create a pull request until this announcement is removed.
+
+Develop version will place in `dev` branch, which will be very unstable.
+
 # Smart Pairs
 
 `smart-pairs` is written in lua and provides pairs completion, deletion and jump.
