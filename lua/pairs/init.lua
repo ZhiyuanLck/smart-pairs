@@ -34,6 +34,7 @@ local config = {
       {'<', '>'}
     },
     tex = {
+      {"'", "'", {ignore_pre = '\\v(\\\\|\\S)'}},
       {'$', '$', {cross_line = true}},
       --- Chinese pairs
       {'（', '）'},
@@ -166,6 +167,9 @@ local config = {
     current_line = {
       enable_cond     = true,
       enable_fallback = fb.delete,
+      balanced = {
+        delete_extra_space = false
+      }
     }
   },
   space = {
@@ -525,7 +529,7 @@ end
 function Pairs:ignore_pre(left_line, left)
   left_line = self:clean(left_line, left)
   local opts = self:get_opts(left)
-  if not opts.ignore_pre then return false end
+  if opts.ignore_pre == nil then return false end
   local ignore_pre = opts.ignore_pre .. '$'
   return vim.fn.match(left_line, ignore_pre) ~= -1
 end
