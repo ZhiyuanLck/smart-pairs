@@ -19,7 +19,7 @@ function Pair:new(pair)
   local obj = { left = pair[1], right = pair[2] }
   u.check_type(obj.left, 'string')
   u.check_type(obj.right, 'string')
-  u.check_type(pair[3], 'table', nil)
+  u.check_type(pair[3], 'table', true)
 
   for k, v in pairs(pair[3] or {}) do
     obj[k] = v

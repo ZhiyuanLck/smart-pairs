@@ -26,6 +26,11 @@ describe('Test class Pair:', function()
     assert.has.errors(function() Pair:new(pair) end)
   end)
 
+  it("should have no error when pair has no option", function()
+    local pair = { 'a', 'b' }
+    assert.has_no.errors(function() Pair:new(pair) end)
+  end)
+
   it("should copy the options", function()
     local pair = { 'a', 'b', { ignore_pre = 'test' } }
     pair = Pair:new(pair)
