@@ -231,7 +231,7 @@ end
 local function warn(msg)
   vim.cmd(fmt([[
     echohl WarningMsg
-    echom "smart-pair warning: %s"
+    echom "smart-pairs warning: %s"
     echohl None
   ]], msg))
 end
