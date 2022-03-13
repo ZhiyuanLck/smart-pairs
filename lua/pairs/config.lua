@@ -79,6 +79,17 @@ function M.get_config(user_config)
   end
   config.pairs = pairs_tbl
 
+  -- merge global pairs into filetype-specified pairs
+  for ft, ft_pairs in pairs(config.pairs) do
+    if ft ~= '*' then
+      for _, pair in ipairs(config.pairs['*']) do
+        if not config.lr[ft][pair.left] and not config.rl[ft][pair.right] then
+          push(ft_pairs, pair)
+        end
+      end
+    end
+  end
+
   return config
 end
 

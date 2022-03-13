@@ -41,4 +41,52 @@ describe('Test configuration of pairs:', function()
     assert.are.same('a', Pairs.pairs.rust[1].left)
     assert.are.same('b', Pairs.pairs.rust[1].right)
   end)
+
+  it("global pairs should be merged into the pairs of current file type", function()
+    local user_config = {
+      pairs = {
+        ['*'] = { {'a', 'b'} },
+        lua = { {'+', '+'} }
+      }
+    }
+    local config = conf.get_config(user_config)
+    assert.are.same('a', config.pairs.lua[2].left)
+    assert.are.same('b', config.pairs.lua[2].right)
+
+    Pairs.setup(user_config)
+    assert.are.same('a', Pairs.pairs.lua[2].left)
+    assert.are.same('b', Pairs.pairs.lua[2].right)
+  end)
+
+  it("global pairs should not overwrite the local one when left pairs are same", function()
+    local user_config = {
+      pairs = {
+        ['*'] = { {'a', 'b'} },
+        lua = { {'a', '+'} }
+      }
+    }
+    local config = conf.get_config(user_config)
+    assert.are.same('a', config.pairs.lua[1].left)
+    assert.are.same('+', config.pairs.lua[1].right)
+
+    Pairs.setup(user_config)
+    assert.are.same('a', Pairs.pairs.lua[1].left)
+    assert.are.same('+', Pairs.pairs.lua[1].right)
+  end)
+
+  it("global pairs should not overwrite the local one when right pairs are same", function()
+    local user_config = {
+      pairs = {
+        ['*'] = { {'a', 'b'} },
+        lua = { {'+', 'b'} }
+      }
+    }
+    local config = conf.get_config(user_config)
+    assert.are.same('+', config.pairs.lua[1].left)
+    assert.are.same('b', config.pairs.lua[1].right)
+
+    Pairs.setup(user_config)
+    assert.are.same('+', Pairs.pairs.lua[1].left)
+    assert.are.same('b', Pairs.pairs.lua[1].right)
+  end)
 end)
