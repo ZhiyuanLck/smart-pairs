@@ -26,7 +26,7 @@ end
 ---@param col string | number @0-based column index
 function M.set_buf(input, line, col)
   api.nvim_buf_set_lines(0, 0, -1, true, vim.split(input, '\n'))
-  u.set_cursor(line + 1, M.get_col(col or input))
+  u.set_cursor(line, M.get_col(col or input))
 end
 
 --- check the buffer with the expected string and the cursor

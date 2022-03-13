@@ -1,4 +1,6 @@
 local M = {}
+local fn = vim.fn
+local api = vim.api
 local fmt = string.format
 
 --- vim warning
@@ -33,6 +35,23 @@ function M.check_type(var, expect_type, allow_nil)
   if (not allow_nil or val ~= nil) and var_type ~= expect_type then
     error(fmt('expect type %s, but get type %s', expect_type, var_type))
   end
+end
+
+--- get (0, 0) based (line, col) cursor position
+---@return number[]
+function M.get_cursor()
+  local cursor = api.nvim_win_get_cursor(0)
+  cursor[1] = cursor[1] - 1
+  return cursor
+end
+
+--- set the cursor position
+---@param line number @0-based line index, -1 denotes the current line
+---@param col number | string @0-based column index or the text from which the column index is caculated
+function M.set_cursor(line, col)
+  line = line == -1 and fn.line('.') - 1 or line
+  if type(col) == 'string' then col = fn.strlen(col) end
+  api.nvim_win_set_cursor(0, {line + 1, col})
 end
 
 return M

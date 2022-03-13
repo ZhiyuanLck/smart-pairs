@@ -1,4 +1,6 @@
 local u = require('pairs.utils')
+local t = require('pairs.test')
+local api = vim.api
 
 describe('Test utils.check_type:', function()
   it("should have no error (string, string)", function()
@@ -54,5 +56,26 @@ describe('Test utils.check_type:', function()
   it("should have error (table, list)", function()
     local var = { a = 2 }
     assert.has.errors(function() u.check_type(var, 'list') end)
+  end)
+end)
+
+describe('Test utils.get_cursor:', function()
+  before_each(function()
+    t.init_buf()
+  end)
+
+  after_each(function()
+    api.nvim_buf_delete(0, {force = true})
+  end)
+
+  it("should set correct cursor", function()
+    t.set_buf('test', 0, 2)
+    assert.are.same({0, 2}, u.get_cursor())
+    local text = [[
+test
+abc
+    ]]
+    t.set_buf(text, 1, 2)
+    assert.are.same({1, 2}, u.get_cursor())
   end)
 end)
