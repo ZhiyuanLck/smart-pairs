@@ -51,4 +51,11 @@ function Pairs:get_pair(opts)
   return pair
 end
 
+--- collect pairs of current file type
+---@return Pair[]
+function Pairs:get_pairs()
+  local ft = vim.bo.ft
+  return self.pairs[ft] or self.pairs['*']
+end
+
 return Pairs
