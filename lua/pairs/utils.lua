@@ -54,4 +54,12 @@ function M.set_cursor(line, col)
   api.nvim_win_set_cursor(0, {line + 1, col})
 end
 
+--- set the default value of key of tbl if the value is nil
+---@param tbl table
+---@param key string
+---@param default any
+function M.set_default_val(tbl, key, default)
+  if tbl[key] == nil then tbl[key] = default end
+end
+
 return M

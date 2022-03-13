@@ -79,3 +79,17 @@ abc
     assert.are.same({1, 2}, u.get_cursor())
   end)
 end)
+
+describe('Test utils.set_default_val:', function()
+  it("should set the default value", function()
+    local tbl = {}
+    u.set_default_val(tbl, 'a', 1)
+    assert.are.same(1, tbl.a)
+  end)
+
+  it("should do nothing", function()
+    local tbl = {a = 2}
+    u.set_default_val(tbl, 'a', 1)
+    assert.are.same(2, tbl.a)
+  end)
+end)
