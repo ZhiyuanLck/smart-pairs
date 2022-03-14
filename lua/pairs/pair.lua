@@ -2,7 +2,9 @@ local u = require('pairs.utils')
 
 ---@class Pair @pair
 ---@field left string @left pair
+---@field eleft string @escaped left pair
 ---@field right string @right pair
+---@field eright string @escaped right pair
 local Pair = {}
 
 --- create a new pair object
@@ -20,6 +22,9 @@ function Pair.new(pair)
   u.check_type(obj.left, 'string')
   u.check_type(obj.right, 'string')
   u.check_type(pair[3], 'table', true)
+
+  obj.eleft = u.escape(obj.left)
+  obj.eright = u.escape(obj.right)
 
   for k, v in pairs(pair[3] or {}) do
     obj[k] = v

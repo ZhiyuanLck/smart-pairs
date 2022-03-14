@@ -31,6 +31,12 @@ describe('Test class Pair:', function()
     assert.has_no.errors(function() Pair.new(pair) end)
   end)
 
+  it("should set the escaped pair", function()
+    local pair = Pair.new{ '(', ')' }
+    assert.are.same('%(', pair.eleft)
+    assert.are.same('%)', pair.eright)
+  end)
+
   it("should copy the options", function()
     local pair = { 'a', 'b', { ignore_pre = 'test' } }
     pair = Pair.new(pair)

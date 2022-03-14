@@ -14,11 +14,11 @@ describe('Test Pairs method get_pair:', function()
 
   it("should get correct pair", function()
     Pairs.setup()
-    local pair = {left = '(', right = ')'}
+    local pair = {left = '(', right = ')', eleft = '%(', eright = '%)'}
     assert.are.same(pair, Pairs:get_pair{left = '('})
     assert.are.same(pair, Pairs:get_pair{right = ')'})
     vim.bo.ft = 'markdown'
-    pair = {left = '`', right = '`', triplet = true}
+    pair = {left = '`', right = '`', eleft = '`', eright = '`', triplet = true}
     assert.are.same(pair, Pairs:get_pair{left = '`'})
     assert.are.same(pair, Pairs:get_pair{right = '`'})
   end)
