@@ -72,7 +72,7 @@ function Context.count_left(str, left, right, ctn)
   local cur = 1
   local ln, rn, sn = #left, #right, #str
   ctn = ctn or Counter.new()
-  repeat
+  while (cur <= sn) do
     if str:sub(cur, cur + ln - 1) == left then
       ctn:incr()
       cur = cur + ln
@@ -82,7 +82,7 @@ function Context.count_left(str, left, right, ctn)
     else
       cur = cur + 1
     end
-  until (cur > sn)
+  end
   return ctn
 end
 
@@ -96,7 +96,7 @@ function Context.count_right(str, left, right, ctn)
   local ln, rn, sn = #left, #right, #str
   local cur = sn
   ctn = ctn or Counter.new()
-  repeat
+  while (cur > 0) do
     if str:sub(cur - rn + 1, cur) == right then
       ctn:incr()
       cur = cur - rn
@@ -106,7 +106,7 @@ function Context.count_right(str, left, right, ctn)
     else
       cur = cur - 1
     end
-  until (cur < 0)
+  end
   return ctn
 end
 
