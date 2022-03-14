@@ -71,7 +71,7 @@ function M.get_config(user_config)
     config.rl[ft] = {}
 
     for _, pair in ipairs(ft_pairs) do
-      pair = Pair:new(pair)
+      pair = Pair.new(pair)
       push(pairs_tbl[ft], pair)
       config.lr[ft][pair.left] = pair
       config.rl[ft][pair.right] = pair

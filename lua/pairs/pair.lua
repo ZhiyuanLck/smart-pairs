@@ -8,7 +8,7 @@ local Pair = {}
 --- create a new pair object
 ---@param pair table
 ---@return table
-function Pair:new(pair)
+function Pair.new(pair)
   u.check_type(pair, 'list')
 
   local item_count = #pair
