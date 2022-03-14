@@ -110,4 +110,22 @@ function Context.count_right(str, left, right, ctn)
   return ctn
 end
 
+--- calculate the amount of the balanced bracket
+---@param str string @input text
+---@param bracket string @character
+---@return number
+function Context.count_bracket(str, bracket)
+  local n = 0
+  local cur = 1
+  while (cur <= #str) do
+    if str:sub(cur, cur + #bracket - 1) == bracket then
+      n = n + 1
+      cur = cur + #bracket
+    else
+      cur = cur + 1
+    end
+  end
+  return n
+end
+
 return Context
