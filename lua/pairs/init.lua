@@ -19,7 +19,9 @@ function Pairs.setup(...)
     user_config = arg[1] or {}
   end
 
-  u.check_type(user_config, 'table', true)
+  if #user_config > 0 then
+    u.check_type(user_config, 'table', true)
+  end
 
   local config = get_config(user_config)
   for k, v in pairs(config) do

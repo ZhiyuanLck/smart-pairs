@@ -32,7 +32,7 @@ end
 ---@param allow_nil boolean @allow the variable to be nil, default false
 function M.check_type(var, expect_type, allow_nil)
   local var_type = get_type(var)
-  if (not allow_nil or val ~= nil) and var_type ~= expect_type then
+  if (not allow_nil or var ~= nil) and var_type ~= expect_type then
     error(fmt('expect type %s, but get type %s', expect_type, var_type))
   end
 end
