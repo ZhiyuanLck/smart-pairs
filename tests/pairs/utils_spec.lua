@@ -93,3 +93,13 @@ describe('Test utils.set_default_val:', function()
     assert.are.same(2, tbl.a)
   end)
 end)
+
+describe([[Test 'utils.if_nil':]], function()
+  it("should return the original value", function()
+    assert.are.same(2, u.if_nil(2, 1))
+  end)
+
+  it("should return the default value", function()
+    assert.are.same(1, u.if_nil(nil, 1))
+  end)
+end)
