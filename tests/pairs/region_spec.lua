@@ -36,4 +36,17 @@ describe("Test class 'Region':", function()
   it("priority should be 0", function()
     assert.are.same(0, Region.new{start = ''}.priority)
   end)
+
+  it("explicit options should be set", function()
+    local region = {
+      start = '(',
+      finish = ')',
+      cross_line = false,
+      priority = 10
+    }
+    local expected = vim.deepcopy(region)
+    expected.estart = '%('
+    expected.efinish = '%)'
+    assert.are.same(expected, Region.new(region))
+  end)
 end)
