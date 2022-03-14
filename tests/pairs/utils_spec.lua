@@ -1,6 +1,7 @@
 local u = require('pairs.utils')
 local t = require('pairs.test')
 local api = vim.api
+local fmt = string.format
 
 describe('Test utils.check_type:', function()
   it("should have no error (string, string)", function()
@@ -94,5 +95,12 @@ describe([[Test 'utils.if_nil':]], function()
 
   it("should return the default value", function()
     assert.are.same(1, u.if_nil(nil, 1))
+  end)
+end)
+
+describe("Test 'utils.escape':", function()
+  it("should escape special chars", function()
+    local text = '%()[].*+-?{}^$'
+    assert.are.same(text, text:match(u.escape(text)))
   end)
 end)

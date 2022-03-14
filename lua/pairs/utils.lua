@@ -70,4 +70,15 @@ function M.if_nil(a, b)
   return a == nil and b or a
 end
 
+--- escape special lua chars
+---@param str string
+---@return string
+function M.escape(str)
+  local e = {'%', '(', ')', '[', '.', '*', '+', '-', '?', '^', '$'}
+  for _, ch in ipairs(e) do
+    str = str:gsub('%' .. ch, '%%%' .. ch)
+  end
+  return str
+end
+
 return M
