@@ -62,4 +62,12 @@ function M.set_default_val(tbl, key, default)
   if tbl[key] == nil then tbl[key] = default end
 end
 
+--- return a default value if a is nil
+---@param a any
+---@param b any
+---@return any
+function M.if_nil(a, b)
+  return a == nil and b or a
+end
+
 return M
