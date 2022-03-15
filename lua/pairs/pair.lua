@@ -11,26 +11,15 @@ local Pair = {}
 ---@param pair table
 ---@return table
 function Pair.new(pair)
-  u.check_type(pair, 'list')
+  pair.left = u.if_nil(pair.left, pair[1])
+  pair.right = u.if_nil(pair.right, pair[2])
+  u.check_type(pair.left, 'string')
+  u.check_type(pair.right, 'string')
 
-  local item_count = #pair
-  if item_count < 2 then
-    error('pair list must have at least 2 items to specify the left and right pairs')
-  end
+  pair.eleft = u.escape(pair.left)
+  pair.eright = u.escape(pair.right)
 
-  local obj = { left = pair[1], right = pair[2] }
-  u.check_type(obj.left, 'string')
-  u.check_type(obj.right, 'string')
-  u.check_type(pair[3], 'table', true)
-
-  obj.eleft = u.escape(obj.left)
-  obj.eright = u.escape(obj.right)
-
-  for k, v in pairs(pair[3] or {}) do
-    obj[k] = v
-  end
-
-  return setmetatable(obj, Pair)
+  return setmetatable(pair, Pair)
 end
 
 return Pair

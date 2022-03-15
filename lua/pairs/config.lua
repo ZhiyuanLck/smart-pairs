@@ -18,19 +18,19 @@ M.default_config = {
       {'"', '"'},
     },
     lua = {
-      {'(', ')', {ignore = {'%(', '%)', '%%'}}},
-      {'[', ']', {ignore = {'%[', '%]', '%%'}}},
-      {'{', '}', {ignore = {'%{', '%}', '%%'}}},
+      {'(', ')', ignore = {'%(', '%)', '%%'}},
+      {'[', ']', ignore = {'%[', '%]', '%%'}},
+      {'{', '}', ignore = {'%{', '%}', '%%'}},
     },
     python = {
-      {"'", "'", {triplet = true}},
-      {'"', '"', {triplet = true}},
+      {"'", "'", triplet = true},
+      {'"', '"', triplet = true},
     },
     ruby = {
       {'|', '|'},
     },
     markdown = {
-      {'`', '`', {triplet = true}},
+      {'`', '`', triplet = true},
     },
     html = {
       {'<', '>'}
@@ -39,7 +39,7 @@ M.default_config = {
       {'<', '>'}
     },
     tex = {
-      {'$', '$', {cross_line = true}},
+      {'$', '$'},
       --- Chinese pairs
       {'（', '）'},
       {'【', '】'},
