@@ -1,6 +1,17 @@
 local u = require('pairs.utils')
 local api = vim.api
-local fn = vim.fn
+
+--- region status
+---@class Status
+---@field region Region
+---@field ctx Context
+---@field line_idx number
+---@field input_line string
+---@field output_line string
+---@field inside boolean @whether is inside the region, default false
+---@field search_up boolean @whether the search direction is up, default true
+local Status = {}
+Status.__index = Status
 
 --- current context
 ---@class Context
@@ -33,8 +44,8 @@ function Context:init(opts)
   self.cur_line_idx = cursor[1]
   self.cur_col_idx = cursor[2]
   self.cur_line = api.nvim_get_current_line()
-  self.cur_left = fn.strpart(self.cur_line, 0, self.cur_col_idx)
-  self.cur_right = fn.strpart(self.cur_line, self.cur_col_idx)
+  self.cur_left = self.cur_line:sub(1, self.cur_col_idx)
+  self.cur_right = self.cur_line:sub(self.cur_col_idx + 1)
 end
 
 --- bracket counters
