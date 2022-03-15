@@ -13,6 +13,10 @@ describe("Test class 'Region':", function()
     assert.has.errors(function() Region.new{start = '', finish = {}} end)
   end)
 
+  it("should have error when ignore is not list", function()
+    assert.has.errors(function() Region.new{start = '', ignore = { a = 2 }} end)
+  end)
+
   it("should have error when cross_line is not boolean", function()
     assert.has.errors(function() Region.new{start = '', cross_line = 2} end)
   end)
@@ -41,6 +45,7 @@ describe("Test class 'Region':", function()
     local region = {
       start = '(',
       finish = ')',
+      ignore = {'a'},
       cross_line = false,
       priority = 10
     }
