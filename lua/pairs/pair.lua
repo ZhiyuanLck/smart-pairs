@@ -11,6 +11,7 @@ local u = require('pairs.utils')
 ---@field skip number @skip priority, 0 for no skip, default 0
 ---@field is_skip boolean @whehter to skip the region
 ---@field is_pair boolean @if false, the pair only serves as the region, default true
+---@field cross_line boolean @whether the pair or region can spread across multiple lines
 local Pair = {}
 
 --- create a new pair object
@@ -30,10 +31,13 @@ function Pair.new(pair)
   u.check_type(pair.skip, 'number')
 
   pair.is_skip = pair.skip > 0
+
   pair.eleft = u.escape(pair.left)
   if pair.right then
     pair.eright = u.escape(pair.right)
   end
+
+  pair.cross_line = u.if_nil(pair.cross_line, pair.right ~= nil and pair.left ~= pair.right)
 
   pair.ignore = u.if_nil(pair.ignore, {})
   u.check_type(pair.ignore, 'list')

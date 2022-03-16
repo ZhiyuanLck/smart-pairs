@@ -81,6 +81,25 @@ describe("Test fields of class | Pair >", function()
     end)
   end)
 
+  describe("cross_line |", function()
+    it("should have default value true", function()
+      assert.is_true(Pair.new{ '(', ')' }.cross_line)
+    end)
+
+    it("should have default value false", function()
+      assert.is_not_true(Pair.new{ '|', '|' }.cross_line)
+      assert.is_not_true(Pair.new{ '|', is_pair = false }.cross_line)
+    end)
+
+    it("should be set to true", function()
+      assert.is_true(Pair.new{ '|', '|', cross_line = true }.cross_line)
+    end)
+
+    it("should be set to false", function()
+      assert.is_not_true(Pair.new{ '(', ')', cross_line = false }.cross_line)
+    end)
+  end)
+
   describe("ignore opts |", function()
     it("should have error when is not list", function()
       assert.has.errors(function()
