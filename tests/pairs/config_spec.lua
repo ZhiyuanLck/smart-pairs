@@ -1,5 +1,4 @@
 local conf = require('pairs.config')
-local Pairs = require('pairs')
 
 describe('Test configuration of pairs:', function()
   it("should use the default html pairs", function()
