@@ -95,6 +95,8 @@ describe('utils.if_nil', function()
 
   it("should return the default value", function()
     assert.are.same(1, u.if_nil(nil, 1))
+    assert.is_true(u.if_nil(nil, true))
+    assert.is_not_true(u.if_nil(nil, false))
   end)
 end)
 

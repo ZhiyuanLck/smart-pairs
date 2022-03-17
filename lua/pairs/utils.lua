@@ -67,7 +67,8 @@ end
 ---@param b any
 ---@return any
 function M.if_nil(a, b)
-  return a == nil and b or a
+  if a == nil then return b end
+  return a
 end
 
 --- escape special lua chars
