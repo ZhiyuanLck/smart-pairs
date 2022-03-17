@@ -29,26 +29,18 @@ function Pairs.setup(...)
   end
 end
 
---- only for annotation
----@class GetPairOpts
----@field left string @get the right bracket by the left
----@field right string @get the left bracket by the right
-local get_pair_opts = {}
-
 --- get the pair object by either bracket
----@param opts GetPairOpts
+---@param bracket string
 ---@return Pair
-function Pairs:get_pair(opts)
-  local bmap = opts.left ~= nil and self.lr or (opts.right ~= nil and self.rl or nil)
-  if bmap == nil then
-    error('neither left or right bracket is known to get the other one')
-  end
+function Pairs:get_pair(bracket)
+  u.check_type(bracket, 'string', 'bracket')
   local ft = vim.bo.ft
-  local bracket = opts.left or opts.right
-  local pair = bmap[ft] ~= nil and bmap[ft][bracket] or (bmap['*'] and bmap['*'][bracket])
+  local pair = self.lr[ft] and self.lr[ft][bracket]
+  pair = pair or (self.lr['*'] and self.lr['*'][bracket])
+  pair = pair or (self.rl[ft] and self.rl[ft][bracket])
+  pair = pair or (self.rl['*'] and self.rl['*'][bracket])
   if pair == nil then
-    local mode = opts.left and 'left' or 'right'
-    error(fmt('Invalid %s bracket %s', mode, bracket))
+    error(fmt("pair '%s' does not exist", bracket))
   end
   return pair
 end
