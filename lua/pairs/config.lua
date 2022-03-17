@@ -1,6 +1,7 @@
 local u = require('pairs.utils')
 local Pair = require('pairs.pair')
 local push = table.insert
+local sort = table.sort
 
 local M = {}
 
@@ -14,8 +15,8 @@ M.default_config = {
       {'(', ')'},
       {'[', ']'},
       {'{', '}'},
-      {"'", "'"},
-      {'"', '"'},
+      {"'", "'", skip = 20},
+      {'"', '"', skip = 20},
     },
     lua = {
       {'(', ')', ignore = {'%(', '%)', '%%'}},
@@ -23,8 +24,8 @@ M.default_config = {
       {'{', '}', ignore = {'%{', '%}', '%%'}},
     },
     python = {
-      {"'", "'", triplet = true},
-      {'"', '"', triplet = true},
+      {"'", "'", triplet = true, skip = 20},
+      {'"', '"', triplet = true, skip = 20},
     },
     ruby = {
       {'|', '|'},
@@ -74,7 +75,9 @@ function M.get_config(user_config)
       pair = Pair.new(pair)
       push(pairs_tbl[ft], pair)
       config.lr[ft][pair.left] = pair
-      config.rl[ft][pair.right] = pair
+      if pair.right then
+        config.rl[ft][pair.right] = pair
+      end
     end
   end
   config.pairs = pairs_tbl
@@ -89,6 +92,25 @@ function M.get_config(user_config)
       end
     end
   end
+
+  local normal_pairs = {}
+  local skip_regions = {}
+  for ft, ft_pairs in pairs(config.pairs) do
+    normal_pairs[ft] = {}
+    skip_regions[ft] = {}
+
+    for _, pair in ipairs(ft_pairs) do
+      if pair.is_pair then push(normal_pairs[ft], pair) end
+      if pair.is_skip then push(skip_regions[ft], pair) end
+    end
+
+    sort(skip_regions[ft], function(l, r)
+      return l.skip > r.skip
+    end)
+  end
+
+  config.pairs = normal_pairs
+  config.regions = skip_regions
 
   return config
 end

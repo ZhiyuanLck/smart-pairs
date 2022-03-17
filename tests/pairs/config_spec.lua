@@ -89,4 +89,21 @@ describe('Test configuration of pairs:', function()
     assert.are.same('+', Pairs.pairs.lua[1].left)
     assert.are.same('b', Pairs.pairs.lua[1].right)
   end)
+
+  it("regions should be collected and sorted", function()
+    local user_config = {
+      pairs = {
+        ['*'] = {},
+        c = {
+          {'/*', '*/', skip = 10},
+          {'"', '"', skip = 20},
+          {'//', '//', skip = 5},
+        },
+      }
+    }
+    local config = conf.get_config(user_config)
+    assert.are.same('"', config.regions.c[1].left)
+    assert.are.same('/*', config.regions.c[2].left)
+    assert.are.same('//', config.regions.c[3].left)
+  end)
 end)
