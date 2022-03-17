@@ -1,6 +1,6 @@
 local Pairs = require('pairs')
 
-describe('Test Pairs method get_pair:', function()
+describe('Pairs.get_pair', function()
   it("should have error when opts is not set", function()
     Pairs.setup()
     assert.has.errors(function() Pairs:get_pair() end)

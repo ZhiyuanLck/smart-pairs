@@ -3,7 +3,7 @@ local t = require('pairs.test')
 local api = vim.api
 local fmt = string.format
 
-describe('Test utils.check_type:', function()
+describe('utils.check_type', function()
   it("should have no error (string, string)", function()
     assert.has_no.errors(function() u.check_type('', 'string') end)
   end)
@@ -53,7 +53,7 @@ describe('Test utils.check_type:', function()
   end)
 end)
 
-describe('Test utils.get_cursor:', function()
+describe('utils.get_cursor', function()
   before_each(function()
     t.init_buf()
   end)
@@ -74,7 +74,7 @@ abc
   end)
 end)
 
-describe('Test utils.set_default_val:', function()
+describe('utils.set_default_val', function()
   it("should set the default value", function()
     local tbl = {}
     u.set_default_val(tbl, 'a', 1)
@@ -88,7 +88,7 @@ describe('Test utils.set_default_val:', function()
   end)
 end)
 
-describe([[Test 'utils.if_nil':]], function()
+describe('utils.if_nil', function()
   it("should return the original value", function()
     assert.are.same(2, u.if_nil(2, 1))
   end)
@@ -98,7 +98,7 @@ describe([[Test 'utils.if_nil':]], function()
   end)
 end)
 
-describe("Test 'utils.escape':", function()
+describe('utils.escape', function()
   it("should escape special chars", function()
     local text = '%()[].*+-?{}^$'
     assert.are.same(text, text:match(u.escape(text)))
