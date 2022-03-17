@@ -1,7 +1,6 @@
 local u = require('pairs.utils')
 local t = require('pairs.test')
 local api = vim.api
-local fmt = string.format
 
 describe('utils.check_type', function()
   it("should have no error (string, string)", function()
@@ -114,4 +113,19 @@ describe('utils.escape', function()
     local text = '%()[].*+-?{}^$'
     assert.are.same(text, text:match(u.escape(text)))
   end)
+end)
+
+describe('utils.get_line', function()
+  t.init_buf()
+  t.set_buf([[
+first line
+second line
+  ]], 0, 0)
+
+  it("should escape special chars", function()
+    assert.are.same('first line', u.get_line(0))
+    assert.are.same('second line', u.get_line(1))
+  end)
+
+  api.nvim_buf_delete(0, {force = true})
 end)

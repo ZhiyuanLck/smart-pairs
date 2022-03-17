@@ -56,6 +56,13 @@ function M.set_cursor(line, col)
   api.nvim_win_set_cursor(0, {line + 1, col})
 end
 
+--- get the line by 0-based index
+---@param line number @0-based line index
+---@return string
+function M.get_line(line)
+  return fn.getline(line + 1)
+end
+
 --- set the default value of key of tbl if the value is nil
 ---@param tbl table
 ---@param key string
