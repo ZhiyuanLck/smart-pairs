@@ -53,8 +53,9 @@ M.default_config = {
 
 --- merge user config into the copy of default config
 ---@param user_config table @user configuration
+---@param not_sort boolean @used for test, default false
 ---@return table
-function M.get_config(user_config)
+function M.get_config(user_config, not_sort)
   user_config = user_config or {}
   ---@class Pairs
   local config = vim.deepcopy(M.default_config)
@@ -93,24 +94,15 @@ function M.get_config(user_config)
     end
   end
 
-  local normal_pairs = {}
-  local skip_regions = {}
-  for ft, ft_pairs in pairs(config.pairs) do
-    normal_pairs[ft] = {}
-    skip_regions[ft] = {}
+  if u.if_nil(not_sort, false) then return config end
 
-    for _, pair in ipairs(ft_pairs) do
-      if pair.is_pair then push(normal_pairs[ft], pair) end
-      if pair.is_skip then push(skip_regions[ft], pair) end
-    end
-
-    sort(skip_regions[ft], function(l, r)
-      return l.skip > r.skip
+  for _, ft_pairs in pairs(config.pairs) do
+    sort(ft_pairs, function(l, r)
+      if l.skip > r.skip then return true end
+      if l.skip < r.skip then return false end
+      return l.is_skip and not r.is_skip
     end)
   end
-
-  config.pairs = normal_pairs
-  config.regions = skip_regions
 
   return config
 end
