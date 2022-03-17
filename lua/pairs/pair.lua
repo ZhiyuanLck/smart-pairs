@@ -19,15 +19,15 @@ local Pair = {}
 ---@return Pair
 function Pair.new(pair)
   pair.left = u.if_nil(pair.left, pair[1])
-  u.check_type(pair.left, 'string')
+  u.check_type(pair.left, 'string', 'Pair.left')
 
   pair.right = u.if_nil(pair.right, pair[2])
   pair.is_pair = u.if_nil(pair.is_pair, pair.right ~= nil)
-  u.check_type(pair.is_pair, 'boolean')
-  u.check_type(pair.right, 'string', not pair.is_pair)
+  u.check_type(pair.is_pair, 'boolean', 'Pair.is_pair')
+  u.check_type(pair.right, 'string', 'Pair.right', not pair.is_pair)
 
   pair.skip = u.if_nil(pair.skip, 0)
-  u.check_type(pair.skip, 'number')
+  u.check_type(pair.skip, 'number', 'Pair.skip')
 
   pair.is_skip = not pair.is_pair or pair.skip > 0
 
@@ -39,13 +39,13 @@ function Pair.new(pair)
   pair.cross_line = u.if_nil(pair.cross_line, pair.right ~= nil and pair.left ~= pair.right)
 
   pair.ignore = u.if_nil(pair.ignore, {})
-  u.check_type(pair.ignore, 'list')
+  u.check_type(pair.ignore, 'list', 'Pair.ignore')
 
   pair.ignore_left = u.if_nil(pair.ignore_left, {})
-  u.check_type(pair.ignore_left, 'list')
+  u.check_type(pair.ignore_left, 'list', 'Pair.ignore_left')
 
   pair.ignore_right = u.if_nil(pair.ignore_right, {})
-  u.check_type(pair.ignore_right, 'list')
+  u.check_type(pair.ignore_right, 'list', 'Pair.ignore_right')
 
   return setmetatable(pair, Pair)
 end

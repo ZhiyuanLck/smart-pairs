@@ -20,7 +20,7 @@ function Pairs.setup(...)
   end
 
   if #user_config > 0 then
-    u.check_type(user_config, 'table', true)
+    u.check_type(user_config, 'table', 'user_config', true)
   end
 
   local config = get_config(user_config)

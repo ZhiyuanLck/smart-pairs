@@ -13,7 +13,7 @@ describe('utils.check_type', function()
   end)
 
   it("should have no error (nil, table, true)", function()
-    assert.has_no.errors(function() u.check_type(nil, 'table', true) end)
+    assert.has_no.errors(function() u.check_type(nil, 'table', '', true) end)
   end)
 
   it("should have no error ({}, list)", function()
@@ -49,7 +49,16 @@ describe('utils.check_type', function()
   end)
 
   it("should have error (string, number, true)", function()
-    assert.has.errors(function() u.check_type('', 'number', true) end)
+    assert.has.errors(function() u.check_type('', 'number', '', true) end)
+  end)
+
+  it("should have correct error message", function()
+    assert.has_error(function()
+      u.check_type('', 'number', 'n')
+    end, "expect n to have type number, but get type string of value ")
+    assert.has_error(function()
+      u.check_type(2, 'string', '')
+    end, "expect type string, but get type number of value 2")
   end)
 end)
 

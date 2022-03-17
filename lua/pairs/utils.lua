@@ -29,11 +29,13 @@ end
 --- check the type of variable
 ---@param var any @variable of any type
 ---@param expect_type string @expected type of the variable
+---@param hint string @hint information of the variable
 ---@param allow_nil boolean @allow the variable to be nil, default false
-function M.check_type(var, expect_type, allow_nil)
+function M.check_type(var, expect_type, hint, allow_nil)
   local var_type = get_type(var)
   if (not allow_nil or var ~= nil) and var_type ~= expect_type then
-    error(fmt('expect type %s, but get type %s', expect_type, var_type))
+    hint = (hint and hint ~= '') and fmt('%s to have ', hint) or ''
+    error(fmt("expect %stype %s, but get type %s of value %s", hint, expect_type, var_type, var))
   end
 end
 
