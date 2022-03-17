@@ -9,6 +9,7 @@ local M = {}
 ---@field pairs table<string, table> @pairs specification of different file types, '*' for all types
 ---@field lr table<string, Pair> @map from left pair string to Pr object
 ---@field rl table<string, Pair> @map from right pair string to Pr object
+---@field max_search_lines number @maximum lines to be searched
 M.default_config = {
   pairs = {
     ['*'] = {
@@ -49,6 +50,7 @@ M.default_config = {
       {'《', '》'},
     }
   },
+  max_search_lines = 500
 }
 
 --- merge user config into the copy of default config
