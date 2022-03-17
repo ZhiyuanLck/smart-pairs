@@ -30,7 +30,7 @@ function Pair.new(pair)
   pair.skip = u.if_nil(pair.skip, 0)
   u.check_type(pair.skip, 'number')
 
-  pair.is_skip = pair.skip > 0
+  pair.is_skip = not pair.is_pair or pair.skip > 0
 
   pair.eleft = u.escape(pair.left)
   if pair.right then

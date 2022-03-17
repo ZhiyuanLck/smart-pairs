@@ -66,6 +66,7 @@ describe("Test fields of class | Pair >", function()
   describe("is_skip |", function()
     it("should be true", function()
       assert.is_true(Pair.new{'[', ']', skip = 2}.is_skip)
+      assert.is_true(Pair.new{'[', ']', is_pair = false}.is_skip)
     end)
 
     it("should be false", function()
