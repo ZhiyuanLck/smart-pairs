@@ -56,8 +56,10 @@ local Counter = {}
 Counter.__index = Counter
 
 --- create a counter object
+---@param ctn Counter @copy initialization
 ---@return Counter
-function Counter.new()
+function Context.new_counter(ctn)
+  if ctn then return setmetatable({real = ctn.real, valid = ctn.valid}, Counter) end
   return setmetatable({real = 0, valid = 0}, Counter)
 end
 
@@ -82,7 +84,7 @@ end
 function Context.count_left(str, left, right, ctn)
   local cur = 1
   local ln, rn, sn = #left, #right, #str
-  ctn = ctn or Counter.new()
+  ctn = ctn or Context.new_counter()
   while (cur <= sn) do
     if str:sub(cur, cur + ln - 1) == left then
       ctn:incr()
@@ -106,7 +108,7 @@ end
 function Context.count_right(str, left, right, ctn)
   local ln, rn, sn = #left, #right, #str
   local cur = sn
-  ctn = ctn or Counter.new()
+  ctn = ctn or Context.new_counter()
   while (cur > 0) do
     if str:sub(cur - rn + 1, cur) == right then
       ctn:incr()
