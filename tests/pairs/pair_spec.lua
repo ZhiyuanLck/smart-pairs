@@ -5,12 +5,21 @@ describe("Pair.is_pair", function()
     assert.is_true(Pair.new{'[', ']'}.is_pair)
   end)
 
+  it("should have default value false", function()
+    assert.is_not_true(Pair.new{'['}.is_pair)
+  end)
+
   it("should be set", function()
     assert.is_not_true(Pair.new{'[', ']', is_pair = false}.is_pair)
+    assert.is_true(Pair.new{'[', ']', is_pair = true}.is_pair)
   end)
 
   it("should get error when is not boolean", function()
     assert.has.errors(function() Pair.new{'[', ']', is_pair = 2} end)
+  end)
+
+  it("should get error when is_pair is true but right bracket is nil", function()
+    assert.has.errors(function() Pair.new{'[', is_pair = true} end)
   end)
 end)
 
@@ -35,8 +44,8 @@ describe("Pair.right", function()
     assert.are.same(']', Pair.new{left = '[', right = ']'}.right)
   end)
 
-  it("should get error when is nil and is_pair is true", function()
-    assert.has.errors(function() Pair.new{'['} end)
+  it("should get no error when is nil and is_pair is true", function()
+    assert.has_no.errors(function() Pair.new{'['} end)
   end)
 
   it("should be nil when is_pair is false", function()

@@ -18,13 +18,12 @@ local Pair = {}
 ---@param pair table
 ---@return Pair
 function Pair.new(pair)
-  pair.is_pair = u.if_nil(pair.is_pair, true)
-  u.check_type(pair.is_pair, 'boolean')
-
   pair.left = u.if_nil(pair.left, pair[1])
   u.check_type(pair.left, 'string')
 
   pair.right = u.if_nil(pair.right, pair[2])
+  pair.is_pair = u.if_nil(pair.is_pair, pair.right ~= nil)
+  u.check_type(pair.is_pair, 'boolean')
   u.check_type(pair.right, 'string', not pair.is_pair)
 
   pair.skip = u.if_nil(pair.skip, 0)
