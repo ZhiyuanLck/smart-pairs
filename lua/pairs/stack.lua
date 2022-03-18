@@ -4,9 +4,12 @@ local Stack = {}
 Stack.__index = Stack
 
 --- creat a new stack
+---@param list any[]
 ---@return Stack
-function Stack.new()
-  return setmetatable({size = 0}, Stack)
+function Stack.new(list)
+  list = list or {}
+  list.size = #list
+  return setmetatable(list, Stack)
 end
 
 --- push data to stack

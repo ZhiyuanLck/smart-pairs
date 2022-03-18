@@ -7,6 +7,14 @@ describe('pairs.Stack', function()
     assert.has.errors(function() st:top() end)
   end)
 
+  it('should create from a list', function()
+    local st1 = Stack.new()
+    st1:push('a')
+    st1:push('b')
+    local st2 = Stack.new{'a', 'b'}
+    assert.is_true(st1 == st2)
+  end)
+
   it('should work well', function()
     local st = Stack.new()
     assert.is_true(st:empty())
