@@ -9,6 +9,7 @@ local M = {}
 ---@field pairs table<string, table> @pairs specification of different file types, '*' for all types
 ---@field lr table<string, Pair> @map from left pair string to Pr object
 ---@field rl table<string, Pair> @map from right pair string to Pr object
+---@field ignore table<string, string[]> @extra ignore patterns, '*' for all types
 ---@field max_search_lines number @maximum lines to be searched
 M.default_config = {
   pairs = {
@@ -18,11 +19,6 @@ M.default_config = {
       {'{', '}'},
       {"'", "'", skip = 20},
       {'"', '"', skip = 20},
-    },
-    lua = {
-      {'(', ')', ignore = {'%(', '%)', '%%'}},
-      {'[', ']', ignore = {'%[', '%]', '%%'}},
-      {'{', '}', ignore = {'%{', '%}', '%%'}},
     },
     python = {
       {"'", "'", triplet = true, skip = 20},
@@ -49,6 +45,9 @@ M.default_config = {
       {'“', '”'},
       {'《', '》'},
     }
+  },
+  ignore = {
+    lua = {'%%', '%(', '%)', '%['}
   },
   max_search_lines = 500
 }
@@ -95,6 +94,18 @@ function M.get_config(user_config, not_sort)
       end
     end
   end
+
+  -- merge global ignore patterns into filetype patterns
+  u.check_type(config.ignore, 'table', 'config.ignore')
+  for ft, ft_ignore in pairs(config.ignore) do
+    if ft ~= '*' then
+      local ignore = vim.deepcopy(config.ignore['*'] or {})
+      vim.list_extend(ignore, ft_ignore)
+      config.ignore[ft] = ignore
+    end
+  end
+
+  u.check_type(config.max_search_lines, 'number')
 
   if u.if_nil(not_sort, false) then return config end
 

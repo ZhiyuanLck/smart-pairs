@@ -52,4 +52,9 @@ function Pairs:get_pairs()
   return self.pairs[ft] or self.pairs['*']
 end
 
+function Pairs:get_ignore()
+  local ft = vim.bo.ft
+  return self.ignore[ft] or self.ignore['*']
+end
+
 return Pairs
