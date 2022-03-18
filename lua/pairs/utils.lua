@@ -91,4 +91,13 @@ function M.escape(str)
   return str
 end
 
+--- test the benchmark
+---@param times number @times to run
+---@param func fun() @function to run
+function M.benchmark(times, info, func)
+  local t = os.clock()
+  for _ = 1, times do func() end
+  print(fmt('%s elapsed time by running %d times: %d ms', info, times, (os.clock() - t) * 1000))
+end
+
 return M
