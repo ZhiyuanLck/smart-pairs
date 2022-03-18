@@ -1,4 +1,5 @@
 local Pair = require('pairs.pair')
+local Stack = require('pairs.stack')
 
 describe("Pair.is_pair", function()
   it("should have default value true", function()
@@ -132,5 +133,34 @@ describe("Pair's ignore opts", function()
     assert.are.same({'a', 'b'}, Pair.new{ '[', ']', ignore = { 'a', 'b' } }.ignore)
     assert.are.same({'a', 'b'}, Pair.new{ '[', ']', ignore_left = { 'a', 'b' } }.ignore_left)
     assert.are.same({'a', 'b'}, Pair.new{ '[', ']', ignore_right = { 'a', 'b' } }.ignore_right)
+  end)
+end)
+
+describe("Pair:forward", function()
+  it("should work well", function()
+    local pair = Pair.new{'[', ']'}
+    local st = Stack.new()
+    local line = '[a]]]'
+    local idx = 1
+
+    idx = pair:forward(line, idx, st, false)
+    assert.are.equals(Stack.new{'['}, st)
+    assert.are.same(2, idx)
+
+    idx = pair:forward(line, idx, st, false)
+    assert.are.equals(Stack.new{'['}, st)
+    assert.are.same(2, idx)
+
+    idx = pair:forward(line, 3, st, false)
+    assert.are.equals(Stack.new(), st)
+    assert.are.same(4, idx)
+
+    idx = pair:forward(line, idx, st, false)
+    assert.are.equals(Stack.new(), st)
+    assert.are.same(5, idx)
+
+    idx = pair:forward(line, idx, st, true)
+    assert.are.equals(Stack.new{']'}, st)
+    assert.are.same(6, idx)
   end)
 end)

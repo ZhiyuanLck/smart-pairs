@@ -13,6 +13,7 @@ local u = require('pairs.utils')
 ---@field is_pair boolean @if false, the pair only serves as the region, default true
 ---@field cross_line boolean @whether the pair or region can spread across multiple lines
 local Pair = {}
+Pair.__index = Pair
 
 --- create a new pair object
 ---@param pair table
@@ -48,6 +49,27 @@ function Pair.new(pair)
   u.check_type(pair.ignore_right, 'list', 'Pair.ignore_right')
 
   return setmetatable(pair, Pair)
+end
+
+--- forward the parse progress
+---@param line string @line to be parsed
+---@param idx number @1-based char idx
+---@param st Stack @pair stack
+---@param push_right boolean @whether to push the extra right bracket
+---@return number @line idx
+function Pair:forward(line, idx, st, push_right)
+  if line:sub(idx, idx + #self.left - 1) == self.left then
+    st:push(self.left)
+    idx = idx + #self.left
+  elseif line:sub(idx, idx + #self.right - 1) == self.right then
+    if not st:empty() and st:top() == self.left then
+      st:pop()
+    elseif push_right then
+      st:push(self.right)
+    end
+    idx = idx + #self.right
+  end
+  return idx
 end
 
 return Pair
