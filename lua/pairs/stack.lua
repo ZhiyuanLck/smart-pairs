@@ -42,4 +42,12 @@ function Stack:empty()
   return self.size == 0
 end
 
+function Stack.__eq(st1, st2)
+  if st1.size ~= st2.size then return false end
+  for i = 1, st1.size do
+    if st1[i] ~= st2[i] then return false end
+  end
+  return true
+end
+
 return Stack
