@@ -36,4 +36,10 @@ function Stack:top()
   return self[self.size]
 end
 
+--- test whether the stack is empty
+---@return boolean
+function Stack:empty()
+  return self.size == 0
+end
+
 return Stack
