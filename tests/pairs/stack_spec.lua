@@ -47,4 +47,10 @@ describe('pairs.Stack', function()
     st2:push('b')
     assert.is_true(st1 == st2)
   end)
+
+  it('equality', function()
+    local st = Stack.new{'a', 'b'}
+    st:clear()
+    assert.is_true(st:empty())
+  end)
 end)

@@ -1,5 +1,5 @@
 ---@class Stack
----@filed size
+---@field size number
 local Stack = {}
 Stack.__index = Stack
 
@@ -43,6 +43,11 @@ end
 ---@return boolean
 function Stack:empty()
   return self.size == 0
+end
+
+--- clear the stack
+function Stack:clear()
+  self.size = 0
 end
 
 function Stack.__eq(st1, st2)
