@@ -17,12 +17,12 @@ M.default_config = {
       {'(', ')'},
       {'[', ']'},
       {'{', '}'},
-      {"'", "'", skip = 20},
-      {'"', '"', skip = 20},
+      {"'", "'", priority = 20},
+      {'"', '"', priority = 20},
     },
     python = {
-      {"'", "'", triplet = true, skip = 20},
-      {'"', '"', triplet = true, skip = 20},
+      {"'", "'", triplet = true, priority = 20},
+      {'"', '"', triplet = true, priority = 20},
     },
     ruby = {
       {'|', '|'},
@@ -111,9 +111,9 @@ function M.get_config(user_config, not_sort)
 
   for _, ft_pairs in pairs(config.pairs) do
     sort(ft_pairs, function(l, r)
-      if l.skip > r.skip then return true end
-      if l.skip < r.skip then return false end
-      return l.is_skip and not r.is_skip
+      if l.priority > r.priority then return true end
+      if l.priority < r.priority then return false end
+      return l.is_priority and not r.is_priority
     end)
   end
 

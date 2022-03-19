@@ -8,9 +8,8 @@ local u = require('pairs.utils')
 ---@field ignore string[] @lua patterns to be ignored when parse the line
 ---@field ignore_left string[] @lua patterns to the left of the cursor to be concerned
 ---@field ignore_right string[] @lua patterns to the right of the cursor to be concerned
----@field skip number @skip priority, 0 for no skip, default 0
----@field is_skip boolean @whehter to skip the region
----@field is_pair boolean @if false, the pair only serves as the region, default true
+---@field priority number @default 0
+---@field is_pair boolean @whether is the pair to be mapped, default true
 ---@field cross_line boolean @whether the pair or region can spread across multiple lines
 local Pair = {}
 Pair.__index = Pair
@@ -27,10 +26,8 @@ function Pair.new(pair)
   u.check_type(pair.is_pair, 'boolean', 'Pair.is_pair')
   u.check_type(pair.right, 'string', 'Pair.right', not pair.is_pair)
 
-  pair.skip = u.if_nil(pair.skip, 0)
-  u.check_type(pair.skip, 'number', 'Pair.skip')
-
-  pair.is_skip = not pair.is_pair or pair.skip > 0
+  pair.priority = u.if_nil(pair.priority, 0)
+  u.check_type(pair.priority, 'number', 'Pair.priority')
 
   pair.eleft = u.escape(pair.left)
   if pair.right then

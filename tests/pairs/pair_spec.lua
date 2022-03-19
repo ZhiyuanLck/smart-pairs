@@ -58,28 +58,17 @@ describe("Pair.right", function()
   end)
 end)
 
-describe("Pair.skip", function()
+describe("Pair.priority", function()
   it("should have default value 0", function()
-    assert.are.same(0, Pair.new{'[', ']'}.skip)
+    assert.are.same(0, Pair.new{'[', ']'}.priority)
   end)
 
   it("should be set", function()
-    assert.are.same(2, Pair.new{'[', ']', skip = 2}.skip)
+    assert.are.same(2, Pair.new{'[', ']', priority = 2}.priority)
   end)
 
   it("should get error when is not number", function()
-    assert.has.errors(function() Pair.new{'[', ']', skip = ''} end)
-  end)
-end)
-
-describe("Pair.is_skip", function()
-  it("should be true", function()
-    assert.is_true(Pair.new{'[', ']', skip = 2}.is_skip)
-    assert.is_true(Pair.new{'[', ']', is_pair = false}.is_skip)
-  end)
-
-  it("should be false", function()
-    assert.is_not_true(Pair.new{'[', ']', skip = 0}.is_skip)
+    assert.has.errors(function() Pair.new{'[', ']', priority = ''} end)
   end)
 end)
 

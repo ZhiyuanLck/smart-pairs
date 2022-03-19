@@ -72,9 +72,9 @@ describe('Test configuration of pairs:', function()
         c = {
           {'(', ')'},
           {'<', '>', is_pair = false},
-          {'/*', '*/', skip = 10},
-          {"'", "'", skip = 20},
-          {'//', '//', skip = 5},
+          {'/*', '*/', priority = 10},
+          {"'", "'", priority = 20},
+          {'//', '//', priority = 5},
         },
       }
     }
