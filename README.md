@@ -1,12 +1,11 @@
 # Announcement
 
-The code now is like a mess and I need to add tests for all the code.
+The code now is like a mess, so I will refactor the whole work and add multi-threading support for performance.
 
-The feature request and the bug report will not be processed until the refactor work is done.
+Issues and pull requests will not be processed until the refactor work is done.
 
-Do not create a pull request until this announcement is removed.
-
-Develop version will place in `dev` branch, which will be very unstable.
+Develop version will place in `dev` branch. But if you want to acquire the latest working progress,
+check the discussion of #17.
 
 # Smart Pairs
 
