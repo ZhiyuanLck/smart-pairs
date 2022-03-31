@@ -4,7 +4,7 @@
 
 #ifdef TEST
 static const char *get_pair(pair_node_t *pn) {
-  return pn->is_left ? pn->pair->left : pn->pair->right;
+  return pn->is_trip ? pn->pair->trip_pair : (pn->is_left ? pn->pair->left : pn->pair->right);
 }
 #endif
 
@@ -149,7 +149,7 @@ static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn) {
     return true;
   } else {
     show("push pair: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
-    /* push_right(q, dn); */
+    push_right(q, dn);
   }
 
   return false;
@@ -162,8 +162,7 @@ static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn) {
  * @param pn pair node to be parsed
  */
 static void parse_pair(dequeue_t *q, dequeue_node_t *dn) {
-  int i = 1;
-  while (parse_pair_next(q, dn)) {i++;}
+  while (parse_pair_next(q, dn));
   pair_node_t *p = dn->data;
   /* fprintf(stderr, "parse pair %s %d times\n", p->is_left ? p->pair->left : p->pair->right, i); */
 }
@@ -174,10 +173,11 @@ static void parse_pair(dequeue_t *q, dequeue_node_t *dn) {
  * @param ln: line node
  * @param pair: pointer to the pair
  * @param is_left: left or right pair
+ * @param is_trip: whether is the triplet pair
  * @param line_idx: line index of the pair
  * @param col_idx: column index of the pair
  */
-static void handle_pair(line_node_t *ln, pair_t *pair, bool is_left, size_t line_idx, size_t col_idx) {
+static void handle_pair(line_node_t *ln, pair_t *pair, bool is_trip, bool is_left, size_t line_idx, size_t col_idx) {
   if (ln == NULL) {
     return;
   }
@@ -186,6 +186,7 @@ static void handle_pair(line_node_t *ln, pair_t *pair, bool is_left, size_t line
   pn           = malloc(sizeof(*pn));
   pn->pair     = pair;
   pn->is_left  = is_left;
+  pn->is_trip  = is_trip;
   pn->line_idx = line_idx;
   pn->col_idx  = col_idx;
 
@@ -238,7 +239,7 @@ static void find_pair(void *arg) {
     line = ctx->lines[i];
     while (line[col] != '\0') {
       show("search col %lu\n", col);
-      // ignore escaped pattern
+      /* ignore escaped pattern */
       if (line[col] == '\\') {
         ++col;
         if (line[col] != '\0') {
@@ -250,17 +251,32 @@ static void find_pair(void *arg) {
       save = col;
       for (int j = 0; j < ctx->num_pairs; j++) {
         pair = ctx->pairs[j];
+
+        /* check if is the triplet pair */
+        if (pair->triplet) {
+          c = pair_cmp(pair->trip_pair, line, col);
+          if (c != 0) {
+            show("line: %s, char: %c, find triplet %s\n", line, line[col], pair->trip_pair);
+            handle_pair(parg->lines + i, pair, true, true, i, c);
+            col = c;
+            break;
+          }
+        }
+
+        /* check if is the left pair */
         c = pair_cmp(pair->left, line, col);
         if (c != 0) {
           show("line: %s, char: %c, find left %s\n", line, line[col], pair->left);
-          handle_pair(parg->lines + i, pair, true, i, c);
+          handle_pair(parg->lines + i, pair, false, true, i, c);
           col = c;
           break;
         }
+
+        /* check if is the right pair */
         c = pair_cmp(pair->right, line, col);
         if (c != 0) {
           show("line: %s, char: %c, find right %s\n", line, line[col], pair->right);
-          handle_pair(parg->lines + i, pair, false, i, c);
+          handle_pair(parg->lines + i, pair, false, false, i, c);
           col = c;
           break;
         }

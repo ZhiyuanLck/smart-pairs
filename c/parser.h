@@ -18,6 +18,7 @@
 struct pair {
   const char *left;       /* left pair */
   const char *right;      /* right pair, may be NULL */
+  const char *trip_pair;  /* triplet pair */
   int         priority;   /* priority of the parsing order */
   bool        triplet;    /* whether the triplet pair is defined */
   bool        cross_line; /* whether the pairs can cross lines */
@@ -39,10 +40,11 @@ struct context {
 typedef struct context context_t;
 
 typedef struct pair_node {
-  pair_t           *pair;     /* pair definition */
-  bool              is_left;  /* left or right one */
-  size_t            line_idx; /* line index of current pair */
-  size_t            col_idx;  /* column index of current pair */
+  pair_t *pair;     /* pair definition */
+  bool    is_left;  /* left or right one */
+  bool    is_trip;  /* whether is the triplet pair */
+  size_t  line_idx; /* line index of current pair */
+  size_t  col_idx;  /* column index of current pair */
 } pair_node_t;
 
 typedef struct line_node {

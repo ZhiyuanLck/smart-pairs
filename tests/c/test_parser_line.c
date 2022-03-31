@@ -55,18 +55,34 @@ void test_one_line_helper(const char *file, int lineno, const char *line, const 
 
 int main() {
   /* normal tests */
-  test_one_line("(", "(", "(");
-  test_one_line("((", "((", "((");
-  test_one_line(")", ")", ")");
-  test_one_line("))", "))", "))");
-  test_one_line("()", "()", "");
+  test_one_line("(",       "(",   "(");
+  test_one_line("((",      "((",  "((");
+  test_one_line(")",       ")",   ")");
+  test_one_line("))",      "))",  "))");
+  test_one_line("()",      "()",  "");
   test_one_line("(text))", "())", ")");
   test_one_line("((text)", "(()", "(");
 
-  /* brackets with line comments */
-  test_one_line("(//)", "(//)", "(");
+  /* brackets with comments */
+  test_one_line("(//)",    "(//)",    "(");
+  test_one_line("(//()",   "(//()",   "(");
+  test_one_line("(/*)*/",  "(/*)*/",  "(");
+  test_one_line("(/*)*/)", "(/*)*/)", "");
+
+  /* brackets with string */
+  test_one_line("'(",  "'(",  "'(");
+  test_one_line("(')", "(')", "(')");
+
+  /* triplet pair */
+  test_one_line("'''",   "'''",   "'''");
+  test_one_line("''''",  "''''",  "''''");
+  test_one_line("(''')", "(''')", "(''')");
 
   /* escape patterns */
-  test_one_line("\\(", "", "");
+  test_one_line("\\(",   "",   "");
+  test_one_line("\\()",  ")",  ")");
+  test_one_line("(\\)",  "(",  "(");
+  test_one_line("(\\))", "()", "");
+
   destroy_msg();
 }
