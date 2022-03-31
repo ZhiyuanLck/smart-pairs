@@ -1,0 +1,110 @@
+#include "test.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+/* create a new pair struct for test */
+static pair_t *new_pair(const char* left, const char *right, int priority, bool triplet, bool cross_line, bool balanced) {
+  pair_t *pair = malloc(sizeof(pair_t));
+  pair->left       = left;
+  pair->right      = right;
+  pair->priority   = priority;
+  pair->triplet    = triplet;
+  pair->cross_line = cross_line;
+  pair->balanced   = balanced;
+  return pair;
+}
+
+/* create a new context for test */
+context_t *new_context(const char **lines, size_t num_lines) {
+  context_t *ctx;
+
+  pair_t **pairs = malloc(6 * sizeof(pair_t*));
+  pairs[0] = new_pair("(",  ")",  0,  false, true,  false);
+  pairs[1] = new_pair("[",  "]",  0,  false, true,  false);
+  pairs[2] = new_pair("//", NULL, 5,  false, false, false);
+  pairs[3] = new_pair("/*", "*/", 10, false, true,  false);
+  pairs[4] = new_pair("'",  "'",  20, true,  false, true);
+  pairs[5] = new_pair("\"", "\"", 20, true,  false, true);
+
+  ctx = malloc(sizeof(*ctx));
+  ctx->tp         = NULL;
+  ctx->ignore     = NULL;
+  ctx->lines      = lines;
+  ctx->pairs      = pairs;
+  ctx->num_ignore = 0;
+  ctx->num_lines  = num_lines;
+  ctx->num_pairs  = 6;
+  ctx->cur_col    = 0;
+  ctx->cur_line   = 0;
+
+  ctx->pairs = pairs;
+  return ctx;
+}
+
+/* destroy the context */
+void destroy_context(context_t *ctx) {
+  for (int i = 0; i < ctx->num_pairs; i++) {
+    free(ctx->pairs[i]);
+  }
+  free(ctx->pairs);
+  free(ctx);
+}
+
+/**
+ * @brief convert the dequeue to string by concat the pairs saved in the nodes
+ *
+ * @param q pointer to the dequeue
+ * @param s where the result string is saved
+ * @param is_pair whether is the pair list or dequeue node stack
+ */
+void to_string(dequeue_t *q, char *s, bool is_pair) {
+  if (q == NULL) {
+    *s = '\0';
+    return;
+  }
+  dequeue_node_t *dn1;
+  dequeue_node_t *dn2;
+  pair_node_t    *pn;
+  const char     *c;
+
+  dn1 = q->head;
+  while (dn1 != NULL) {
+    if (is_pair) {
+      pn = dn1->data;
+    } else {
+      dn2 = dn1->data;
+      pn  = dn2->data;
+    }
+    c  = pn->is_left ? pn->pair->left : pn->pair->right;
+    while (c != NULL && *c != '\0') {
+      *s = *c;
+      s++;
+      c++;
+    }
+    dn1 = dn1->next;
+  }
+  *s = '\0';
+}
+
+/**
+ * @brief show specific line of the source file
+ *
+ * @param file file name
+ * @param lineno line index
+ */
+void show_line(const char *file, int lineno) {
+  FILE *fp   = fopen(file, "r");
+  int   line = 0;
+  if (fp == NULL) {
+    fprintf(stderr, "cannot open file %s\n", file);
+  } else {
+    char s[100];
+    while (fgets(s, 100, fp) != NULL) {
+      if (line == lineno) {
+        fprintf(stderr, "%s\n", s);
+        break;
+      }
+      line++;
+    }
+  }
+}
