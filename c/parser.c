@@ -60,16 +60,19 @@ static void destroy_lines(line_node_t *lines, int num) {
 /**
  * @brief create the arguments struct
  *
- * @param ctx context
- * @param start start of the line index
- * @param end end of the line index
+ * @param ctx: context
+ * @param lres: left parsing result
+ * @param rres: right parsing result
+ * @param start: start of the line index
+ * @param end: end of the line index
  * @return arguments
  */
-static parse_arg_t *new_arg(context_t *ctx, size_t start, size_t end) {
+static parse_arg_t *new_arg(context_t *ctx, dequeue_t *res, size_t start, size_t end) {
   parse_arg_t *arg;
   arg        = malloc(sizeof(*arg));
   arg->lines = new_lines(ctx->num_lines);
   arg->ctx   = ctx;
+  arg->res   = res;
   arg->start = start;
   arg->end   = end;
   return arg;
@@ -78,7 +81,7 @@ static parse_arg_t *new_arg(context_t *ctx, size_t start, size_t end) {
 /**
  * @brief destroy the arguments
  *
- * @param arg argumnets
+ * @param arg: argumnets
  */
 static void destroy_arg(parse_arg_t *arg) {
   destroy_lines(arg->lines, arg->ctx->num_lines);
@@ -88,7 +91,7 @@ static void destroy_arg(parse_arg_t *arg) {
 /**
  * @brief remove single pair whose scope is the line scope
  *
- * @param q pointer to the dequeue
+ * @param q: pointer to the dequeue
  */
 static void remove_single_pair(dequeue_t *q) {
   if (q == NULL) {
@@ -111,11 +114,12 @@ static void remove_single_pair(dequeue_t *q) {
 /**
  * @brief parse the pair
  *
- * @param q dequeue of pair nodes
- * @param pn pair node to be parsed
+ * @param q: dequeue of pair nodes
+ * @param pn: pair node to be parsed
+ * @param preprocess: whether is preprocessing
  * @return true if need to judge more otherwise false
  */
-static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn) {
+static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn, bool preprocess) {
   if (q->tail == NULL) {
     push_right(q, dn);
     show("empty stack\n");
@@ -126,27 +130,35 @@ static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn) {
   dequeue_node_t *tmp = q->tail->data;
   pair_node_t    *top = tmp->data;
 
-  /* first, do not handle balanced pairs now */
-  if (top->pair->balanced || pn->pair->balanced) {
-    show("ignore balanced pair\n");
+  /* first, do not handle balanced pairs if is in preprocess */
+  if (preprocess && (top->pair->balanced || pn->pair->balanced)) {
+    show("ignore balanced pair in preprocess\n");
     push_right(q, dn);
-  /* then, handle cases when two pairs are equal */
-  } else if (top->pair == pn->pair) {
-    if (top->is_left && !pn->is_left) {
+    return false;
+  }
+
+  /* handle cases when two pairs are equal */
+  if (top->pair == pn->pair) {
+    if (pn->pair->balanced || (top->is_left && !pn->is_left)) {
       show("offset the matched left pair: %s\n", get_pair(top));
       pop_right(q);
     } else {
       show("push the same pair: %s\n", get_pair(top));
       push_right(q, dn);
     }
-  /* l1 >= l2, l1 >= r2: discard current pair if the top pair is a different left pair with a higher or equal priority */
+  /* l1 >= l2, l1 >= r2: discard current pair if the top pair is a different left pair with a higher or equal priority.
+   * balanced pair is default to be left pair, so fit the current case if top is a balanced pair
+   */
   } else if (top->is_left &&  top->pair->priority >= pn->pair->priority) {
     show("discard the right part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
-  /* l1 < r2, r1 < r2: discard the top pair if the current pair is a different right pair with a higher priority */
+  /* l1 < r2, r1 < r2: discard the top pair if the current pair is a different right pair with a higher priority
+   * balanced pair is default to be left pair, so fit the current case if pn is not a balanced pair
+   */
   } else if (!pn->is_left && top->pair->priority < pn->pair->priority) {
     show("discard the left part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
     pop_right(q);
     return true;
+  /* l1 < l2, r1 > r2 or pn is a balanced pair */
   } else {
     show("push pair: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
     push_right(q, dn);
@@ -158,19 +170,20 @@ static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn) {
 /**
  * @brief parse the pair
  *
- * @param q dequeue of pair nodes
- * @param pn pair node to be parsed
+ * @param q: dequeue of pair nodes
+ * @param pn: pair node to be parsed
+ * @param preprocess: whether is preprocessing
  */
-static void parse_pair(dequeue_t *q, dequeue_node_t *dn) {
-  while (parse_pair_next(q, dn));
+static void parse_pair(dequeue_t *q, dequeue_node_t *dn, bool preprocess) {
+  show("%s\n", preprocess ? ">>> preprocess" : "=== process all");
+  while (parse_pair_next(q, dn, preprocess));
   pair_node_t *p = dn->data;
-  /* fprintf(stderr, "parse pair %s %d times\n", p->is_left ? p->pair->left : p->pair->right, i); */
 }
 
 /**
  * @brief handle when a new pair is found
  *
- * @param ln: line node
+ * @param ln: array of line node
  * @param pair: pointer to the pair
  * @param is_left: left or right pair
  * @param is_trip: whether is the triplet pair
@@ -190,8 +203,10 @@ static void handle_pair(line_node_t *ln, pair_t *pair, bool is_trip, bool is_lef
   pn->line_idx = line_idx;
   pn->col_idx  = col_idx;
 
-  push_right(ln->pairs, pn);
-  parse_pair(ln->cache, ln->pairs->tail);
+  line_node_t *pre_ln;
+  line_node_t *cur_ln = ln + line_idx;
+  push_right(cur_ln->pairs, pn);
+  parse_pair(cur_ln->cache, cur_ln->pairs->tail, true);
 }
 
 /**
@@ -257,7 +272,7 @@ static void find_pair(void *arg) {
           c = pair_cmp(pair->trip_pair, line, col);
           if (c != 0) {
             show("line: %s, char: %c, find triplet %s\n", line, line[col], pair->trip_pair);
-            handle_pair(parg->lines + i, pair, true, true, i, c);
+            handle_pair(parg->lines, pair, true, true, i, c);
             col = c;
             break;
           }
@@ -267,7 +282,7 @@ static void find_pair(void *arg) {
         c = pair_cmp(pair->left, line, col);
         if (c != 0) {
           show("line: %s, char: %c, find left %s\n", line, line[col], pair->left);
-          handle_pair(parg->lines + i, pair, false, true, i, c);
+          handle_pair(parg->lines, pair, false, true, i, c);
           col = c;
           break;
         }
@@ -276,7 +291,7 @@ static void find_pair(void *arg) {
         c = pair_cmp(pair->right, line, col);
         if (c != 0) {
           show("line: %s, char: %c, find right %s\n", line, line[col], pair->right);
-          handle_pair(parg->lines + i, pair, false, false, i, c);
+          handle_pair(parg->lines, pair, false, false, i, c);
           col = c;
           break;
         }
@@ -287,7 +302,28 @@ static void find_pair(void *arg) {
     }
 
     remove_single_pair(parg->lines[i].cache);
+    show("search end and start final parsing\n");
+
+    if (parg->res == NULL) {
+      parg->lines[i].done = true;
+      return;
+    }
+
+    while (i > 0 && !parg->lines[i - 1].done);
+
+    dequeue_t      *q;
+    pair_node_t    *pn;
+    dequeue_node_t *pdn;
+    dequeue_node_t *cdn = parg->lines[i].cache->head;
+
+    while (cdn != NULL) {
+      pdn = cdn->data;
+      pn  = pdn->data;
+      parse_pair(parg->res, pdn, false);
+      cdn = cdn->next;
+    }
+    remove_single_pair(parg->res);
+
     parg->lines[i].done = true;
-    show("search end\n");
   }
 }

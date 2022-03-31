@@ -19,13 +19,14 @@ static pair_t *new_pair(const char* left, const char *right, const char *trip_pa
 context_t *new_context(const char **lines, size_t num_lines) {
   context_t *ctx;
 
-  pair_t **pairs = malloc(6 * sizeof(pair_t*));
-  pairs[5] = new_pair("\"", "\"", "\"\"\"", 20, true,  false, true);
-  pairs[4] = new_pair("'",  "'",  "'''",    20, true,  false, true);
-  pairs[3] = new_pair("/*", "*/", NULL,     10, false, true,  false);
-  pairs[2] = new_pair("//", NULL, NULL,     5,  false, false, false);
-  pairs[0] = new_pair("(",  ")",  NULL,     0,  false, true,  false);
-  pairs[1] = new_pair("[",  "]",  NULL,     0,  false, true,  false);
+  pair_t **pairs = malloc(7 * sizeof(pair_t*));
+  pairs[0] = new_pair("\"", "\"", "\"\"\"", 20, true,  false, true);
+  pairs[1] = new_pair("'",  "'",  "'''",    20, true,  false, true);
+  pairs[2] = new_pair("/*", "*/", NULL,     10, false, true,  false);
+  pairs[3] = new_pair("//", NULL, NULL,     5,  false, false, false);
+  pairs[4] = new_pair("(",  ")",  NULL,     0,  false, true,  false);
+  pairs[5] = new_pair("[",  "]",  NULL,     0,  false, true,  false);
+  pairs[6] = new_pair("$",  "$",  NULL,     0,  false, true,  true);
 
   ctx = malloc(sizeof(*ctx));
   ctx->tp         = NULL;
@@ -34,9 +35,9 @@ context_t *new_context(const char **lines, size_t num_lines) {
   ctx->pairs      = pairs;
   ctx->num_ignore = 0;
   ctx->num_lines  = num_lines;
-  ctx->num_pairs  = 6;
-  ctx->cur_col    = 0;
+  ctx->num_pairs  = 7;
   ctx->cur_line   = 0;
+  ctx->cur_col    = 0;
 
   ctx->pairs = pairs;
   return ctx;
@@ -101,11 +102,11 @@ void show_line(const char *file, int lineno) {
   } else {
     char s[100];
     while (fgets(s, 100, fp) != NULL) {
+      line++;
       if (line == lineno) {
         fprintf(stderr, "%s\n", s);
         break;
       }
-      line++;
     }
   }
 }

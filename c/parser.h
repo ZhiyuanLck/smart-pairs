@@ -54,10 +54,11 @@ typedef struct line_node {
 } line_node_t;
 
 typedef struct parse_arg {
-  context_t   *ctx;    /* current context */
-  line_node_t *lines;  /* array of line nodes */
-  size_t       start;  /* start of the range of lines, [start, end) */
-  size_t       end;    /* end of the range of lines [start, end) */
+  context_t   *ctx;   /* current context */
+  line_node_t *lines; /* array of line nodes */
+  dequeue_t   *res;   /* parsing result */
+  size_t       start; /* start of the range of lines, [start, end) */
+  size_t       end;   /* end of the range of lines [start, end) */
 } parse_arg_t;
 
 int parse(context_t *ctx);

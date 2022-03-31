@@ -15,3 +15,4 @@ endfunction()
 
 new_test(dequeue)
 new_test(parser_line)
+new_test(parser_multi_line)

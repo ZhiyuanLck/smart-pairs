@@ -8,18 +8,19 @@
 /**
  * @brief test if the parse result is correct
  *
- * @param file source file name
- * @param lineno line index of the source file
- * @param s line to be parsed
- * @param pos string representation of position queue
- * @param st string representation of stack
+ * @param file: source file name
+ * @param lineno: line index of the source file
+ * @param s: line to be parsed
+ * @param pos: string representation of position queue
+ * @param st: string representation of stack
  */
 void test_one_line_helper(const char *file, int lineno, const char *line, const char *pos, const char *st) {
   char         str1[100];
   char         str2[100];
-  const char  *s[] = {line};
-  context_t   *ctx = new_context(s, 1);
-  parse_arg_t *arg = new_arg(ctx, 0, 1);
+  const char  *s[]  = {line};
+  context_t   *ctx  = new_context(s, 1);
+  dequeue_t   *res = new_dequeue();
+  parse_arg_t *arg  = new_arg(ctx, res, 0, 1);
   find_pair(arg);
 
   to_string(arg->lines->pairs, str1, true);
@@ -47,6 +48,7 @@ void test_one_line_helper(const char *file, int lineno, const char *line, const 
     exit(1);
   }
 
+  destroy_dequeue(res);
   destroy_arg(arg);
   destroy_context(ctx);
 }
@@ -69,9 +71,10 @@ int main() {
   test_one_line("(/*)*/",  "(/*)*/",  "(");
   test_one_line("(/*)*/)", "(/*)*/)", "");
 
-  /* brackets with string */
+  /* brackets with balanced pair */
   test_one_line("'(",  "'(",  "'(");
   test_one_line("(')", "(')", "(')");
+  test_one_line("$$",  "$$",  "$$");
 
   /* triplet pair */
   test_one_line("'''",   "'''",   "'''");
