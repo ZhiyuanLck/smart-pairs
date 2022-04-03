@@ -13,6 +13,7 @@ typedef struct dequeue {
 } dequeue_t;
 
 dequeue_t *new_dequeue();
+void clear_dequeue(dequeue_t *q);
 void destroy_dequeue(dequeue_t *q);
 void push_left(dequeue_t *q, void *data);
 void push_right(dequeue_t *q, void *data);

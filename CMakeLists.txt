@@ -8,6 +8,7 @@ find_package(Threads REQUIRED)
 include_directories(c tests/c)
 
 if(TEST_PAIR)
+  set(CMAKE_BUILD_TYPE Debug)
   add_library(parser SHARED c/parser.c c/dequeue.c c/msg.c)
   target_compile_definitions(parser PUBLIC TEST)
 else()

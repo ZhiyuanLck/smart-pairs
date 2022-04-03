@@ -4,7 +4,7 @@
 #include "parser.h"
 #include "dequeue.h"
 
-context_t *new_context(const char **lines, size_t num_lines);
+context_t *new_context(const char **lines, size_t num_lines, size_t pair_idx);
 void destroy_context(context_t *ctx);
 void to_string(dequeue_t *q, char *s, bool is_pair);
 bool cmp_pos(dequeue_t *q, const char *s);

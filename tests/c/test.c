@@ -16,7 +16,7 @@ static pair_t *new_pair(const char* left, const char *right, const char *trip_pa
 }
 
 /* create a new context for test */
-context_t *new_context(const char **lines, size_t num_lines) {
+context_t *new_context(const char **lines, size_t num_lines, size_t pair_idx) {
   context_t *ctx;
 
   pair_t **pairs = malloc(7 * sizeof(pair_t*));
@@ -32,6 +32,7 @@ context_t *new_context(const char **lines, size_t num_lines) {
   ctx->tp         = NULL;
   ctx->ignore     = NULL;
   ctx->lines      = lines;
+  ctx->pair       = pairs[pair_idx];
   ctx->pairs      = pairs;
   ctx->num_ignore = 0;
   ctx->num_lines  = num_lines;
@@ -96,17 +97,17 @@ void to_string(dequeue_t *q, char *s, bool is_pair) {
  */
 void show_line(const char *file, int lineno) {
   FILE *fp   = fopen(file, "r");
-  int   line = 0;
+  int   line = 1;
   if (fp == NULL) {
     fprintf(stderr, "cannot open file %s\n", file);
   } else {
-    char s[100];
-    while (fgets(s, 100, fp) != NULL) {
-      line++;
+    char s[1000];
+    while (fgets(s, 1000, fp) != NULL) {
       if (line == lineno) {
         fprintf(stderr, "%s\n", s);
         break;
       }
+      ++line;
     }
   }
 }

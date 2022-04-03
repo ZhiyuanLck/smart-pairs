@@ -31,6 +31,21 @@ dequeue_t *new_dequeue() {
 }
 
 /**
+ * @brief clear the elements
+ *
+ * @param q pointer to the dequeue
+ */
+void clear_dequeue(dequeue_t *q) {
+  if (q == NULL) {
+    return;
+  }
+
+  while (q->head != NULL) {
+    pop_left(q);
+  }
+}
+
+/**
  * @brief destroy all nodes of the dequeue and the dequeue itself
  *
  * @param q pointer to the dequeue

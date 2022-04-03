@@ -42,8 +42,7 @@ static void destroy_lines(line_node_t *lines, int num) {
     return;
   }
 
-  dequeue_node_t *qn;
-  dequeue_t *q;
+  pairs_dqueue *q;
 
   for (int i = 0; i < num; i++) {
     q = lines[i].pairs;
@@ -67,24 +66,25 @@ static void destroy_lines(line_node_t *lines, int num) {
  * @param end: end of the line index
  * @return arguments
  */
-static parse_arg_t *new_arg(context_t *ctx, dequeue_t *res, size_t start, size_t end) {
+static parse_arg_t *new_arg(context_t *ctx) {
   parse_arg_t *arg;
   arg        = malloc(sizeof(*arg));
   arg->lines = new_lines(ctx->num_lines);
+  arg->res   = new_dequeue();
   arg->ctx   = ctx;
-  arg->res   = res;
-  arg->start = start;
-  arg->end   = end;
+  arg->start = 0;
+  arg->end   = 0;
   return arg;
 }
 
 /**
  * @brief destroy the arguments
  *
- * @param arg: argumnets
+ * @param arg: arguments
  */
 static void destroy_arg(parse_arg_t *arg) {
   destroy_lines(arg->lines, arg->ctx->num_lines);
+  destroy_dequeue(arg->res);
   free(arg);
 }
 
@@ -93,42 +93,47 @@ static void destroy_arg(parse_arg_t *arg) {
  *
  * @param q: pointer to the dequeue
  */
-static void remove_single_pair(dequeue_t *q) {
+static void remove_single_pair(nodes_dqueue *q) {
   if (q == NULL) {
     return;
   }
 
-  dequeue_node_t *dn;
-  pair_node_t    *pn;
+  pairs_dnode *dn;
+  pair_node_t *pn;
 
   while (q->tail != NULL) {
     dn = q->tail->data;
     pn = dn->data;
-    if (!pn->is_left || pn->pair->right != NULL) {
+    if (!pn->is_left || pn->is_trip || pn->pair->cross_line) {
       break;
     }
+    show("remove single pair %s\n", get_pair(pn));
     pop_right(q);
   }
 }
 
 /**
- * @brief parse the pair
+ * @brief parse the pair.
+ * @detailed parse_pair_next decide how to handle the curren pair node, and if a pair is popped from the
+ * stack, true is returned to indicate that we need keep handling the current pair node in terms
+ * of the new stack. So we need a wrapper, i.e. parse_pair to check the return value of
+ * parse_pair_next in a while loop until the current pair node is pushed or discarded.
  *
- * @param q: dequeue of pair nodes
- * @param pn: pair node to be parsed
+ * @param q: cache dequeue
+ * @param dn: pairs dequeue node to be parsed
  * @param preprocess: whether is preprocessing
  * @return true if need to judge more otherwise false
  */
-static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn, bool preprocess) {
+static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
   if (q->tail == NULL) {
     push_right(q, dn);
     show("empty stack\n");
     return false;
   }
 
-  pair_node_t    *pn  = dn->data;
-  dequeue_node_t *tmp = q->tail->data;
-  pair_node_t    *top = tmp->data;
+  pair_node_t *pn  = dn->data;
+  pairs_dnode *tmp = q->tail->data;
+  pair_node_t *top = tmp->data;
 
   /* first, do not handle balanced pairs if is in preprocess */
   if (preprocess && (top->pair->balanced || pn->pair->balanced)) {
@@ -170,18 +175,22 @@ static bool parse_pair_next(dequeue_t *q, dequeue_node_t *dn, bool preprocess) {
 /**
  * @brief parse the pair
  *
- * @param q: dequeue of pair nodes
- * @param pn: pair node to be parsed
+ * @param q: cache dequeue
+ * @param dn: pairs dequeue node to be parsed
  * @param preprocess: whether is preprocessing
  */
-static void parse_pair(dequeue_t *q, dequeue_node_t *dn, bool preprocess) {
+static void parse_pair(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
   show("%s\n", preprocess ? ">>> preprocess" : "=== process all");
   while (parse_pair_next(q, dn, preprocess));
   pair_node_t *p = dn->data;
 }
 
+
 /**
  * @brief handle when a new pair is found
+ * @detailed a new pair node is created with the status and the position of the pair. By one hand,
+ * the pair is pushed to the pairs list, and by the other hand, the new pairs dequeue node is
+ * then passed to parse_pair to update the cache dequeue.
  *
  * @param ln: array of line node
  * @param pair: pointer to the pair
@@ -210,11 +219,11 @@ static void handle_pair(line_node_t *ln, pair_t *pair, bool is_trip, bool is_lef
 }
 
 /**
- * @brief compare the pair with the line and return the shifted index
+ * @brief compare the pair with the line and return the updated index or 0 for no match
  *
- * @param p pair string
- * @param line line string
- * @param col line column index
+ * @param p: pair string
+ * @param line: line string
+ * @param col: line column index
  * @return 0 for no match and shifted index for match
  */
 static size_t pair_cmp(const char *p, const char *line, size_t col) {
@@ -232,8 +241,10 @@ static size_t pair_cmp(const char *p, const char *line, size_t col) {
 
 /**
  * @brief find and save the position of each pair and process them as possible as it can
+ * @detailed find every pair and record then in the pairs dequeue, and the results of the
+ * preprocess are cached.
  *
- * @param arg arguments
+ * @param arg: arguments of type parse_arg_t
  */
 static void find_pair(void *arg) {
   if (arg == NULL) {
@@ -242,7 +253,7 @@ static void find_pair(void *arg) {
 
   parse_arg_t *parg = arg;
   context_t   *ctx  = parg->ctx;
-  pair_t      *pair;
+  pair_t      *pair; /* current pair in the loop */
   const char  *line; /* current line */
   const char  *p;    /* pair string */
   size_t       save; /* index before cmp */
@@ -302,28 +313,215 @@ static void find_pair(void *arg) {
     }
 
     remove_single_pair(parg->lines[i].cache);
-    show("search end and start final parsing\n");
-
-    if (parg->res == NULL) {
-      parg->lines[i].done = true;
-      return;
-    }
-
-    while (i > 0 && !parg->lines[i - 1].done);
-
-    dequeue_t      *q;
-    pair_node_t    *pn;
-    dequeue_node_t *pdn;
-    dequeue_node_t *cdn = parg->lines[i].cache->head;
-
-    while (cdn != NULL) {
-      pdn = cdn->data;
-      pn  = pdn->data;
-      parse_pair(parg->res, pdn, false);
-      cdn = cdn->next;
-    }
-    remove_single_pair(parg->res);
+    show("search end\n");
 
     parg->lines[i].done = true;
   }
 }
+
+/**
+ * @brief check if the current pair node has not reach the bound
+ *
+ * @param res global result dequeue
+ * @param pdn pairs dequeue node
+ * @param bound restrict bound pair
+ * @return whether to continue to process
+ */
+static bool check_and_parse(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
+  pairs_dnode *pdn2;
+  pair_node_t *pn = pdn->data;
+  if (pn->pair == bound && (!pn->is_left || pn->pair->balanced)) {
+    if (res->tail == NULL) {
+      return false;
+    } else {
+      pdn2 = res->tail->data;
+      pn   = pdn2->data;
+      /* if the pair of the top of the stack is the bound pair, it must be a left pair */
+      if (pn->pair != bound) {
+        return false;
+      }
+    }
+  }
+  parse_pair(res, pdn, false);
+  return true;
+}
+
+/**
+ * @brief merge the pairs dequeue to the result dequeue
+ * @detailed if we find a left bound pair before the cursor, we need to reparse the line where the
+ * bound pair locates.
+ *
+ * @param res: global result dequeue
+ * @param pdn: pairs dequeue node which is the next node of the bound pair node
+ * @param bound restrict bound pair
+ * @return whether to cotinue the search
+ */
+static bool merge_pairs(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
+  pair_node_t *pn;  /* pair node */
+  while ( pdn != NULL) {
+    pn = pdn->data;
+    if (!check_and_parse(res, pdn, bound)) {
+      return false;
+    }
+    pdn = pdn->next;
+  }
+  remove_single_pair(res);
+  return true;
+}
+
+/**
+ * @brief merge the cache dequeue to the result dequeue
+ *
+ * @param res: global result dequeue
+ * @param cdn: cache dequeue node
+ * @param bound restrict bound pair
+ * @return whether to cotinue the search
+ */
+static bool merge_cache(nodes_dqueue *res, nodes_dnode *cdn, pair_t *bound) {
+  pair_node_t *pn;  /* pair node */
+  pairs_dnode *pdn; /* dequeue node that stores pair node */
+  while (cdn != NULL) {
+    pdn = cdn->data;
+    pn  = pdn->data;
+    show("merge cache node %s\n", get_pair(pn));
+    if (!check_and_parse(res, pdn, bound)) {
+      show("reach the bound %s\n", bound->right);
+      return false;
+    }
+    cdn = cdn->next;
+  }
+  remove_single_pair(res);
+  return true;
+}
+
+/**
+ * @brief merge the cache dequeue of current line to the result dequeue
+ *
+ * @param res: global result dequeue
+ * @param cdn: cache dequeue node
+ * @param pair: pair to be searched
+ * @param col: column of the cursor
+ * @return bound pair node or NULL
+ */
+static pairs_dnode *merge_cur_line(nodes_dqueue *res, nodes_dnode *cdn, pair_t *pair, size_t col) {
+  pair_node_t *pn;  /* pair node */
+  pairs_dnode *pdn; /* dequeue node that stores pair node */
+  pairs_dnode *pdn2;
+
+  bool on_left = true; /* whether the current pair node is on the left the cursor */
+  while (cdn != NULL) {
+    pdn = cdn->data;
+    pn  = pdn->data;
+    if (on_left && pn->col_idx > col) {
+      on_left = false;
+      if (res->tail != NULL) {
+        pdn2 = res->tail->data;
+        pn   = pdn2->data;
+        /* triplet is default left */
+        if (pn->is_left && pn->pair != pair) {
+          return pdn2;
+        }
+      }
+    }
+    parse_pair(res, pdn, false);
+    cdn = cdn->next;
+  }
+
+  remove_single_pair(res);
+
+  /* recheck in case that the cursor is still on the right of top pair of the stack */
+  if (on_left && res->tail != NULL) {
+    pdn2 = res->tail->data;
+    pn   = pdn2->data;
+    /* triplet is default left */
+    if (pn->is_left && pn->pair != pair) {
+      return pdn2;
+    }
+  }
+
+  return NULL;
+}
+
+/**
+ * @brief merge all results
+ *
+ * @param arg: arguments of type parse_arg_t
+ */
+static void merge_results(void *arg) {
+  parse_arg_t *parg  = arg;
+  context_t   *ctx   = parg->ctx;
+  dequeue_t   *res   = parg->res;
+  line_node_t *lines = parg->lines;
+
+  pair_node_t *pn;      /* pair node */
+  pairs_dnode *restart; /* pair node to restart search */
+  nodes_dnode *cdn;     /* cache dequeue node */
+  pair_t      *bound = NULL;
+
+  show("--> start merging results...\n");
+  int i = 0;
+  while (i < ctx->num_lines) {
+    while (!lines[i > 0 ? i - 1 : 0].done);
+
+    cdn = lines[i].cache->head;
+    if (bound == NULL && i == ctx->cur_line) {
+      show("process current line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
+      restart = merge_cur_line(res, cdn, ctx->pair, ctx->cur_col);
+      if (restart != NULL) {
+        pn    = restart->data;
+        bound = pn->pair;
+        show("restart at line: %s, col: %d, pair: %s\n", ctx->lines[pn->line_idx], pn->line_idx, get_pair(pn));
+        clear_dequeue(res);
+        if (!merge_pairs(res, restart->next, bound)) {
+          return;
+        }
+        pn = restart->data;
+        i  = pn->line_idx + 1;
+      } else {
+        ++i;
+      }
+      continue;
+    }
+
+    show("process line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
+
+    if (!merge_cache(res, cdn, bound)) {
+      return;
+    };
+    ++i;
+  }
+}
+
+void parse(context_t *ctx) {
+  parse_arg_t *arg = new_arg(ctx);
+  size_t       sep = 1;
+  size_t       i   = 0;
+
+  while (i < ctx->num_lines) {
+    arg->start = i;
+    arg->end   = i + sep > ctx->num_lines ? ctx->num_lines : i + sep;
+    find_pair(arg);
+    i += sep;
+  }
+
+  merge_results(arg);
+  destroy_arg(arg);
+}
+
+#ifdef TEST
+parse_arg_t *test_parse(context_t *ctx) {
+  parse_arg_t *arg = new_arg(ctx);
+  size_t       sep = 1;
+  size_t       i   = 0;
+
+  while (i < ctx->num_lines) {
+    arg->start = i;
+    arg->end   = i + sep > ctx->num_lines ? ctx->num_lines : i + sep;
+    find_pair(arg);
+    i += sep;
+  }
+
+  merge_results(arg);
+  return arg;
+}
+#endif

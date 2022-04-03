@@ -36,6 +36,8 @@ void add_msg(const char *file, int lineno, const char* format, ...) {
   msg_node_t *node = malloc(sizeof(msg_node_t));
   node->next = NULL;
   node->msg  = msg;
+  /* show message in time */
+  // fprintf(stdout, "%s", msg);
 
   if (msgq == NULL) {
     msgq       = malloc(sizeof(*msgq));

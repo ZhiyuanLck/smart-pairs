@@ -31,6 +31,7 @@ struct context {
   const char   **ignore;     /* ignore patterns */
   const char   **lines;      /* lines to be parsed */
   pair_t       **pairs;      /* pairs to be parsed */
+  pair_t        *pair;       /* pair to be searched */
   size_t         num_ignore; /* number of ignore patterns */
   size_t         num_lines;  /* number of lines */
   size_t         num_pairs;  /* number of pairs */
@@ -47,20 +48,29 @@ typedef struct pair_node {
   size_t  col_idx;  /* column index of current pair */
 } pair_node_t;
 
+typedef dequeue_t      pairs_dqueue; /* dequeue whose nodes store the pair nodes */
+typedef dequeue_node_t pairs_dnode;  /* dequeue node that stores the pair node */
+typedef dequeue_t      nodes_dqueue; /* dequeue whose nodes store the pairs_dnode */
+typedef dequeue_node_t nodes_dnode;  /* dequeue node that stores the pairs_dnode */
+
 typedef struct line_node {
-  dequeue_t *pairs; /* list of pair nodes */
-  dequeue_t *cache; /* store the parsing result of pairs */
-  bool       done;  /* whether all the prepare work of the current line is done */
+  pairs_dqueue *pairs; /* list of pair nodes */
+  nodes_dqueue *cache; /* store the parsing result of pairs */
+  bool          done;  /* whether all the prepare work of the current line is done */
 } line_node_t;
 
 typedef struct parse_arg {
-  context_t   *ctx;   /* current context */
-  line_node_t *lines; /* array of line nodes */
-  dequeue_t   *res;   /* parsing result */
-  size_t       start; /* start of the range of lines, [start, end) */
-  size_t       end;   /* end of the range of lines [start, end) */
+  context_t    *ctx;   /* current context */
+  line_node_t  *lines; /* array of line nodes */
+  nodes_dqueue *res;   /* parsing result */
+  size_t        start; /* start of the range of lines, [start, end) */
+  size_t        end;   /* end of the range of lines [start, end) */
 } parse_arg_t;
 
-int parse(context_t *ctx);
+void parse(context_t *ctx);
+
+#ifdef TEST
+parse_arg_t *test_parse(context_t *ctx);
+#endif /* TEST */
 
 #endif /* PARSER_H */

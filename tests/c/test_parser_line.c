@@ -17,11 +17,9 @@
 void test_one_line_helper(const char *file, int lineno, const char *line, const char *pos, const char *st) {
   char         str1[100];
   char         str2[100];
-  const char  *s[]  = {line};
-  context_t   *ctx  = new_context(s, 1);
-  dequeue_t   *res = new_dequeue();
-  parse_arg_t *arg  = new_arg(ctx, res, 0, 1);
-  find_pair(arg);
+  const char  *s[] = {line};
+  context_t   *ctx = new_context(s, 1, 4);
+  parse_arg_t *arg = test_parse(ctx);
 
   to_string(arg->lines->pairs, str1, true);
   bool pos_cond = strcmp(pos, str1) == 0;
@@ -48,7 +46,6 @@ void test_one_line_helper(const char *file, int lineno, const char *line, const 
     exit(1);
   }
 
-  destroy_dequeue(res);
   destroy_arg(arg);
   destroy_context(ctx);
 }
@@ -78,7 +75,7 @@ int main() {
 
   /* triplet pair */
   test_one_line("'''",   "'''",   "'''");
-  test_one_line("''''",  "''''",  "''''");
+  test_one_line("''''",  "''''",  "'''");
   test_one_line("(''')", "(''')", "(''')");
 
   /* escape patterns */
