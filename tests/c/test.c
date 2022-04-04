@@ -39,6 +39,7 @@ context_t *new_context(const char **lines, size_t num_lines, size_t pair_idx) {
   ctx->num_pairs  = 7;
   ctx->cur_line   = 0;
   ctx->cur_col    = 0;
+  ctx->stop       = false;
 
   ctx->pairs = pairs;
   return ctx;

@@ -185,58 +185,51 @@ static void parse_pair(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
   pair_node_t *p = dn->data;
 }
 
-
-/**
- * @brief handle when a new pair is found
- * @detailed a new pair node is created with the status and the position of the pair. By one hand,
- * the pair is pushed to the pairs list, and by the other hand, the new pairs dequeue node is
- * then passed to parse_pair to update the cache dequeue.
- *
- * @param ln: array of line node
- * @param pair: pointer to the pair
- * @param is_left: left or right pair
- * @param is_trip: whether is the triplet pair
- * @param line_idx: line index of the pair
- * @param col_idx: column index of the pair
- */
-static void handle_pair(line_node_t *ln, pair_t *pair, bool is_trip, bool is_left, size_t line_idx, size_t col_idx) {
-  if (ln == NULL) {
-    return;
-  }
-
-  pair_node_t *pn;
-  pn           = malloc(sizeof(*pn));
-  pn->pair     = pair;
-  pn->is_left  = is_left;
-  pn->is_trip  = is_trip;
-  pn->line_idx = line_idx;
-  pn->col_idx  = col_idx;
-
-  line_node_t *pre_ln;
-  line_node_t *cur_ln = ln + line_idx;
-  push_right(cur_ln->pairs, pn);
-  parse_pair(cur_ln->cache, cur_ln->pairs->tail, true);
-}
-
 /**
  * @brief compare the pair with the line and return the updated index or 0 for no match
  *
- * @param p: pair string
- * @param line: line string
- * @param col: line column index
- * @return 0 for no match and shifted index for match
+ * @param arg: common arguments
+ * @param pair: pair object
+ * @param is_trip: if is the triplet pair
+ * @param is_left: if is the left pair
+ * @param line_idx: line index
+ * @param col_idx: line column index
  */
-static size_t pair_cmp(const char *p, const char *line, size_t col) {
+static bool pair_cmp(parse_arg_t *arg, pair_t *pair, bool is_trip, bool is_left, size_t line_idx, size_t *col_idx) {
+  const char *p = is_trip ? pair->trip_pair : (is_left ? pair->left : pair->right);
+  /* incase the right pair is NULL */
   if (p == NULL) {
-    return 0;
+    return false;
   }
+
+  context_t  *ctx  = arg->ctx;
+  const char *line = ctx->lines[line_idx];
+  size_t      save = *col_idx;
+  size_t      col  = *col_idx;
 
   while (line[col] != '\0' && *p != '\0' && line[col] == *p) {
     ++col;
     ++p;
   }
 
-  return *p == '\0' ? col : 0;
+  /* pair range [save, col),  | -> cur_col */
+  if (*p == '\0' && (line_idx != ctx->cur_line || save >= ctx->cur_col || col <= ctx->cur_col)) {
+    pair_node_t *pn;
+    pn           = malloc(sizeof(*pn));
+    pn->pair     = pair;
+    pn->is_left  = is_left;
+    pn->on_left  = line_idx <= ctx->cur_line && save <= ctx->cur_col;
+    pn->is_trip  = is_trip;
+    pn->line_idx = line_idx;
+    pn->col_idx  = save;
+    line_node_t *cur_ln = arg->lines + line_idx;
+    push_right(cur_ln->pairs, pn);
+    parse_pair(cur_ln->cache, cur_ln->pairs->tail, true);
+    show("line: %s, char: %c, find left %s\n", ctx->lines[line_idx],  ctx->lines[line_idx][save], get_pair(pn));
+    *col_idx = col;
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -258,13 +251,14 @@ static void find_pair(void *arg) {
   const char  *p;    /* pair string */
   size_t       save; /* index before cmp */
   size_t       col;  /* index of line */
-  size_t       c;    /* index after cmp */
+  // size_t       c;    [> index after cmp <]
 
   for (int i = parg->start; i < parg->end; i++) {
-    col = 0;
-    line = ctx->lines[i];
+    col         = 0;
+    line        = ctx->lines[i];
+
     while (line[col] != '\0') {
-      show("search col %lu\n", col);
+      show("search line %d, col %lu, %c\n", i, col, line[col]);
       /* ignore escaped pattern */
       if (line[col] == '\\') {
         ++col;
@@ -277,33 +271,11 @@ static void find_pair(void *arg) {
       save = col;
       for (int j = 0; j < ctx->num_pairs; j++) {
         pair = ctx->pairs[j];
-
-        /* check if is the triplet pair */
-        if (pair->triplet) {
-          c = pair_cmp(pair->trip_pair, line, col);
-          if (c != 0) {
-            show("line: %s, char: %c, find triplet %s\n", line, line[col], pair->trip_pair);
-            handle_pair(parg->lines, pair, true, true, i, c);
-            col = c;
-            break;
-          }
-        }
-
-        /* check if is the left pair */
-        c = pair_cmp(pair->left, line, col);
-        if (c != 0) {
-          show("line: %s, char: %c, find left %s\n", line, line[col], pair->left);
-          handle_pair(parg->lines, pair, false, true, i, c);
-          col = c;
+        if (pair->triplet && pair_cmp(arg, pair, true, true, i, &col)) {
           break;
-        }
-
-        /* check if is the right pair */
-        c = pair_cmp(pair->right, line, col);
-        if (c != 0) {
-          show("line: %s, char: %c, find right %s\n", line, line[col], pair->right);
-          handle_pair(parg->lines, pair, false, false, i, c);
-          col = c;
+        } else if (pair_cmp(arg, pair, false, true, i, &col)) {
+          break;
+        } else if (pair_cmp(arg, pair, false, false, i, &col)) {
           break;
         }
       }
@@ -330,6 +302,7 @@ static void find_pair(void *arg) {
 static bool check_and_parse(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
   pairs_dnode *pdn2;
   pair_node_t *pn = pdn->data;
+  show("check and parse pair %s\n", get_pair(pn));
   if (pn->pair == bound && (!pn->is_left || pn->pair->balanced)) {
     if (res->tail == NULL) {
       return false;
@@ -351,12 +324,13 @@ static bool check_and_parse(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) 
  * @detailed if we find a left bound pair before the cursor, we need to reparse the line where the
  * bound pair locates.
  *
+ * @param ctx: context
  * @param res: global result dequeue
  * @param pdn: pairs dequeue node which is the next node of the bound pair node
  * @param bound restrict bound pair
  * @return whether to cotinue the search
  */
-static bool merge_pairs(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
+static bool merge_pairs(context_t *ctx, nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
   pair_node_t *pn;  /* pair node */
   while ( pdn != NULL) {
     pn = pdn->data;
@@ -372,12 +346,13 @@ static bool merge_pairs(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
 /**
  * @brief merge the cache dequeue to the result dequeue
  *
+ * @param ctx: context
  * @param res: global result dequeue
  * @param cdn: cache dequeue node
  * @param bound restrict bound pair
  * @return whether to cotinue the search
  */
-static bool merge_cache(nodes_dqueue *res, nodes_dnode *cdn, pair_t *bound) {
+static bool merge_cache(context_t *ctx, nodes_dqueue *res, nodes_dnode *cdn, pair_t *bound) {
   pair_node_t *pn;  /* pair node */
   pairs_dnode *pdn; /* dequeue node that stores pair node */
   while (cdn != NULL) {
@@ -397,13 +372,15 @@ static bool merge_cache(nodes_dqueue *res, nodes_dnode *cdn, pair_t *bound) {
 /**
  * @brief merge the cache dequeue of current line to the result dequeue
  *
- * @param res: global result dequeue
+ * @param ctx: context
+ * @param res: global search result dequeue
  * @param cdn: cache dequeue node
- * @param pair: pair to be searched
- * @param col: column of the cursor
  * @return bound pair node or NULL
  */
-static pairs_dnode *merge_cur_line(nodes_dqueue *res, nodes_dnode *cdn, pair_t *pair, size_t col) {
+static pairs_dnode *merge_cur_line(context_t *ctx, nodes_dqueue *res, nodes_dnode *cdn) {
+  pair_t *pair = ctx->pair;    /* search pair */
+  size_t  col  = ctx->cur_col; /* cursor column */
+
   pair_node_t *pn;  /* pair node */
   pairs_dnode *pdn; /* dequeue node that stores pair node */
   pairs_dnode *pdn2;
@@ -412,7 +389,7 @@ static pairs_dnode *merge_cur_line(nodes_dqueue *res, nodes_dnode *cdn, pair_t *
   while (cdn != NULL) {
     pdn = cdn->data;
     pn  = pdn->data;
-    if (on_left && pn->col_idx > col) {
+    if (on_left && pn->col_idx >= col) {
       on_left = false;
       if (res->tail != NULL) {
         pdn2 = res->tail->data;
@@ -453,6 +430,10 @@ static void merge_results(void *arg) {
   dequeue_t   *res   = parg->res;
   line_node_t *lines = parg->lines;
 
+  if (ctx->stop) {
+    return;
+  }
+
   pair_node_t *pn;      /* pair node */
   pairs_dnode *restart; /* pair node to restart search */
   nodes_dnode *cdn;     /* cache dequeue node */
@@ -466,16 +447,15 @@ static void merge_results(void *arg) {
     cdn = lines[i].cache->head;
     if (bound == NULL && i == ctx->cur_line) {
       show("process current line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
-      restart = merge_cur_line(res, cdn, ctx->pair, ctx->cur_col);
+      restart = merge_cur_line(ctx, res, cdn);
       if (restart != NULL) {
         pn    = restart->data;
         bound = pn->pair;
         show("restart at line: %s, col: %d, pair: %s\n", ctx->lines[pn->line_idx], pn->line_idx, get_pair(pn));
         clear_dequeue(res);
-        if (!merge_pairs(res, restart->next, bound)) {
-          return;
+        if (!merge_pairs(ctx, res, restart->next, bound)) {
+          break;
         }
-        pn = restart->data;
         i  = pn->line_idx + 1;
       } else {
         ++i;
@@ -485,11 +465,13 @@ static void merge_results(void *arg) {
 
     show("process line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
 
-    if (!merge_cache(res, cdn, bound)) {
-      return;
+    if (!merge_cache(ctx, res, cdn, bound)) {
+      break;
     };
     ++i;
   }
+
+  ctx->stop = true;
 }
 
 #ifdef TEST

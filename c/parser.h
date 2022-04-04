@@ -41,17 +41,22 @@ typedef struct context {
 
   unsigned char  status;     /* 0 for no extra pairs, 1 for extra left pair, 2 for extra right pair */
 
+  bool           only_find;  /* stop after left and/or right pair are found */
   bool           find_left;  /* whether to locate the left pair */
+  bool           has_findl;  /* whether has found the left pair */
   size_t         lline;      /* line index of the left pair */
   size_t         lcol;       /* column index of the left pair */
   bool           find_right; /* whether to locate the right pair */
+  bool           has_findr;  /* whether has found the right pair */
   size_t         rline;      /* line index of the left pair */
   size_t         rcol;       /* column index of the left pair */
+
   bool           stop;       /* whether to stop the parse process */
 } context_t;
 
 typedef struct pair_node {
   pair_t *pair;     /* pair definition */
+  bool    on_left;  /* whether the pair is on the left of the cursor */
   bool    is_left;  /* left or right one */
   bool    is_trip;  /* whether is the triplet pair */
   size_t  line_idx; /* line index of current pair */

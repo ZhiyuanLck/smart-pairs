@@ -70,7 +70,9 @@ int main() {
   test_lines("$",   0, 0, 2, "$",     "'$'");
 
   /* scoped merge */
-  test_lines("(",   0, 3, 2, "/*(",   "*/)");
+  test_lines("*/)", 0, 1, 2, "/*(", "*/)");
+  test_lines("(",   0, 2, 2, "/*(", "*/)");
+  test_lines("(",   0, 3, 2, "/*(", "*/)");
 
   destroy_msg();
 }
