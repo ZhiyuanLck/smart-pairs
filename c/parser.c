@@ -492,24 +492,12 @@ static void merge_results(void *arg) {
   }
 }
 
-void parse(context_t *ctx) {
-  parse_arg_t *arg = new_arg(ctx);
-  size_t       sep = 1;
-  size_t       i   = 0;
-
-  while (i < ctx->num_lines) {
-    arg->start = i;
-    arg->end   = i + sep > ctx->num_lines ? ctx->num_lines : i + sep;
-    find_pair(arg);
-    i += sep;
-  }
-
-  merge_results(arg);
-  destroy_arg(arg);
-}
-
 #ifdef TEST
-parse_arg_t *test_parse(context_t *ctx) {
+parse_arg_t *
+#else
+void
+#endif
+parse(context_t *ctx) {
   parse_arg_t *arg = new_arg(ctx);
   size_t       sep = 1;
   size_t       i   = 0;
@@ -522,6 +510,9 @@ parse_arg_t *test_parse(context_t *ctx) {
   }
 
   merge_results(arg);
+#ifdef TEST
   return arg;
-}
+#else
+  destroy_arg(arg);
 #endif
+}

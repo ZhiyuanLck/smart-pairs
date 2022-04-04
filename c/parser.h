@@ -15,7 +15,7 @@
 #endif /* TEST */
 
 
-struct pair {
+typedef struct pair {
   const char *left;       /* left pair */
   const char *right;      /* right pair, may be NULL */
   const char *trip_pair;  /* triplet pair */
@@ -23,22 +23,32 @@ struct pair {
   bool        triplet;    /* whether the triplet pair is defined */
   bool        cross_line; /* whether the pairs can cross lines */
   bool        balanced;   /* whether the left pair is equal to the right pairs */
-};
-typedef struct pair pair_t;
+} pair_t;
 
-struct context {
+typedef struct context {
   thread_pool_t *tp;         /* thread pool */
+
+  pair_t        *pair;       /* pair to be searched */
   const char   **ignore;     /* ignore patterns */
   const char   **lines;      /* lines to be parsed */
   pair_t       **pairs;      /* pairs to be parsed */
-  pair_t        *pair;       /* pair to be searched */
   size_t         num_ignore; /* number of ignore patterns */
   size_t         num_lines;  /* number of lines */
   size_t         num_pairs;  /* number of pairs */
+
   size_t         cur_line;   /* line index of current cursor */
   size_t         cur_col;    /* column index of current cursor */
-};
-typedef struct context context_t;
+
+  unsigned char  status;     /* 0 for no extra pairs, 1 for extra left pair, 2 for extra right pair */
+
+  bool           find_left;  /* whether to locate the left pair */
+  size_t         lline;      /* line index of the left pair */
+  size_t         lcol;       /* column index of the left pair */
+  bool           find_right; /* whether to locate the right pair */
+  size_t         rline;      /* line index of the left pair */
+  size_t         rcol;       /* column index of the left pair */
+  bool           stop;       /* whether to stop the parse process */
+} context_t;
 
 typedef struct pair_node {
   pair_t *pair;     /* pair definition */
@@ -67,10 +77,11 @@ typedef struct parse_arg {
   size_t        end;   /* end of the range of lines [start, end) */
 } parse_arg_t;
 
-void parse(context_t *ctx);
-
 #ifdef TEST
-parse_arg_t *test_parse(context_t *ctx);
-#endif /* TEST */
+parse_arg_t *
+#else
+void
+#endif
+parse(context_t *ctx);
 
 #endif /* PARSER_H */

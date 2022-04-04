@@ -30,7 +30,7 @@ void test_helper(const char *file, int lineno, const char *expect, size_t line_i
   }
   va_end(args);
 
-  parse_arg_t *arg = test_parse(ctx);
+  parse_arg_t *arg = parse(ctx);
 
   to_string(arg->res, str, false);
   file = trunc_file(file);

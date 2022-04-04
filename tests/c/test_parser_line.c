@@ -19,7 +19,7 @@ void test_one_line_helper(const char *file, int lineno, const char *line, const 
   char         str2[100];
   const char  *s[] = {line};
   context_t   *ctx = new_context(s, 1, 4);
-  parse_arg_t *arg = test_parse(ctx);
+  parse_arg_t *arg = parse(ctx);
 
   to_string(arg->lines->pairs, str1, true);
   bool pos_cond = strcmp(pos, str1) == 0;
