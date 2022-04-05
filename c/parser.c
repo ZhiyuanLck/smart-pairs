@@ -127,7 +127,7 @@ static void remove_single_pair(nodes_dqueue *q) {
 static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
   if (q->tail == NULL) {
     push_right(q, dn);
-    show("empty stack\n");
+    show("PAIR: empty stack\n");
     return false;
   }
 
@@ -137,7 +137,7 @@ static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
 
   /* first, do not handle balanced pairs if is in preprocess */
   if (preprocess && (top->pair->balanced || pn->pair->balanced)) {
-    show("ignore balanced pair in preprocess\n");
+    show("PAIR: ignore balanced pair in preprocess\n");
     push_right(q, dn);
     return false;
   }
@@ -145,27 +145,27 @@ static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
   /* handle cases when two pairs are equal */
   if (top->pair == pn->pair) {
     if (pn->pair->balanced || (top->is_left && !pn->is_left)) {
-      show("offset the matched left pair: %s\n", get_pair(top));
+      show("PAIR: offset the matched left pair: %s\n", get_pair(top));
       pop_right(q);
     } else {
-      show("push the same pair: %s\n", get_pair(top));
+      show("PAIR: push the same pair: %s\n", get_pair(top));
       push_right(q, dn);
     }
   /* l1 > l2, l1 > r2: discard current pair if the top pair is a different left pair with a higher priority.
    * balanced pair is default to be left pair, so fit the current case if top is a balanced pair
    */
   } else if (top->is_left &&  top->pair->priority > pn->pair->priority) {
-    show("discard the right part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
+    show("PAIR: discard the right part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
   /* l1 <= r2, r1 <= r2: discard the top pair if the current pair is a different right pair with a higher priority
    * balanced pair is default to be left pair, so fit the current case if pn is not a balanced pair
    */
   } else if (!pn->is_left && top->pair->priority <= pn->pair->priority) {
-    show("discard the left part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
+    show("PAIR: discard the left part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
     pop_right(q);
     return true;
   /* l1 < l2, r1 > r2 or pn is a balanced pair */
   } else {
-    show("push pair: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
+    show("PAIR: push pair: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
     push_right(q, dn);
   }
 
@@ -180,7 +180,6 @@ static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
  * @param preprocess: whether is preprocessing
  */
 static void parse_pair(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
-  show("%s\n", preprocess ? ">>> preprocess" : "=== process all");
   while (parse_pair_next(q, dn, preprocess));
   pair_node_t *p = dn->data;
 }
@@ -331,10 +330,16 @@ static bool check_and_parse(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) 
  * @return whether to cotinue the search
  */
 static bool merge_pairs(context_t *ctx, nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
+  /* end of the file */
+  if (pdn == NULL) {
+    return false;
+  }
   pair_node_t *pn;  /* pair node */
-  while ( pdn != NULL) {
+  while (pdn != NULL) {
     pn = pdn->data;
+    show("merge pairs node %s\n", get_pair(pn));
     if (!check_and_parse(res, pdn, bound)) {
+      show("reach the bound %s\n", bound->right);
       return false;
     }
     pdn = pdn->next;
@@ -353,16 +358,16 @@ static bool merge_pairs(context_t *ctx, nodes_dqueue *res, pairs_dnode *pdn, pai
  * @return whether to cotinue the search
  */
 static bool merge_cache(context_t *ctx, nodes_dqueue *res, nodes_dnode *cdn, pair_t *bound) {
+  /* empty cache */
+  if (cdn == NULL) {
+    return true;
+  }
   pair_node_t *pn;  /* pair node */
   pairs_dnode *pdn; /* dequeue node that stores pair node */
   while (cdn != NULL) {
     pdn = cdn->data;
     pn  = pdn->data;
-    show("merge cache node %s\n", get_pair(pn));
-    if (!check_and_parse(res, pdn, bound)) {
-      show("reach the bound %s\n", bound->right);
-      return false;
-    }
+    parse_pair(res, pdn, false);
     cdn = cdn->next;
   }
   remove_single_pair(res);
@@ -386,6 +391,7 @@ static pairs_dnode *merge_cur_line(pair_t *pair, nodes_dqueue *res, nodes_dnode 
   while (cdn != NULL) {
     pdn = cdn->data;
     pn  = pdn->data;
+    show("process pair %s of current line\n", get_pair(pn));
     if (pair != NULL && on_left && !pn->on_left) {
       show("first bracket on the right of current line: %s\n", get_pair(pn));
       on_left = false;
@@ -443,7 +449,8 @@ static void merge_results(void *arg) {
   while (i < ctx->num_lines) {
     while (!lines[i > 0 ? i - 1 : 0].done);
 
-    cdn = lines[i].cache->head;
+    cdn  = lines[i].cache->head;
+    next = lines[i].pairs->head;
     if (bound == NULL && i == ctx->cur_line) {
       show("process current line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
       restart = merge_cur_line(ctx->pair, res, cdn);
@@ -452,28 +459,27 @@ static void merge_results(void *arg) {
         next  = restart->next;
         bound = pn->pair;
         i     = pn->line_idx;
-        show("restart at line: %s, col: %d, pair: %s\n", ctx->lines[pn->line_idx], pn->col_idx, get_pair(pn));
-        clear_dequeue(res);
 
-        if (next == NULL && i != ctx->cur_line - 1) {
+        if (next == NULL && i < ctx->num_lines - 1) {
           next = lines[i + 1].pairs->head;
+          ++i;
         }
 
-        if (!merge_pairs(ctx, res, next, bound)) {
-          break;
-        }
-        i  += (next ? 1 : 2);
-      } else {
-        ++i;
+        show("--> restart at line: %s, col: %d, pair: %s\n", ctx->lines[pn->line_idx], pn->col_idx, get_pair(pn));
+        clear_dequeue(res);
       }
-      continue;
     }
 
-    show("process line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
+    if (bound) {
+      show("bound: process line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
+      if (!merge_pairs(ctx, res, next, bound)) {
+        break;
+      }
+    } else if (i != ctx->cur_line) {
+      show("unbound: process line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
+      merge_cache(ctx, res, cdn, bound);
+    }
 
-    if (!merge_cache(ctx, res, cdn, bound)) {
-      break;
-    };
     ++i;
   }
 
