@@ -84,5 +84,9 @@ int main() {
   test_one_line("(\\)",  "(",  "(");
   test_one_line("(\\))", "()", "");
 
+  /* multiple brackets */
+  test_one_line("([{", "([{", "([{");
+  test_one_line("([{)", "([{)", "");
+
   destroy_msg();
 }

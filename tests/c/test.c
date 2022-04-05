@@ -19,14 +19,15 @@ static pair_t *new_pair(const char* left, const char *right, const char *trip_pa
 context_t *new_context(const char **lines, size_t num_lines, size_t pair_idx) {
   context_t *ctx;
 
-  pair_t **pairs = malloc(7 * sizeof(pair_t*));
+  pair_t **pairs = malloc(8 * sizeof(pair_t*));
   pairs[0] = new_pair("\"", "\"", "\"\"\"", 20, true,  false, true);
   pairs[1] = new_pair("'",  "'",  "'''",    20, true,  false, true);
   pairs[2] = new_pair("/*", "*/", NULL,     10, false, true,  false);
   pairs[3] = new_pair("//", NULL, NULL,     5,  false, false, false);
   pairs[4] = new_pair("(",  ")",  NULL,     0,  false, true,  false);
   pairs[5] = new_pair("[",  "]",  NULL,     0,  false, true,  false);
-  pairs[6] = new_pair("$",  "$",  NULL,     0,  false, true,  true);
+  pairs[6] = new_pair("{",  "}",  NULL,     0,  false, true,  false);
+  pairs[7] = new_pair("$",  "$",  NULL,     0,  false, true,  true);
 
   ctx = malloc(sizeof(*ctx));
   ctx->tp         = NULL;
@@ -36,7 +37,7 @@ context_t *new_context(const char **lines, size_t num_lines, size_t pair_idx) {
   ctx->pairs      = pairs;
   ctx->num_ignore = 0;
   ctx->num_lines  = num_lines;
-  ctx->num_pairs  = 7;
+  ctx->num_pairs  = 8;
   ctx->cur_line   = 0;
   ctx->cur_col    = 0;
   ctx->stop       = false;

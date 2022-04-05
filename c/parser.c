@@ -151,15 +151,15 @@ static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
       show("push the same pair: %s\n", get_pair(top));
       push_right(q, dn);
     }
-  /* l1 >= l2, l1 >= r2: discard current pair if the top pair is a different left pair with a higher or equal priority.
+  /* l1 > l2, l1 > r2: discard current pair if the top pair is a different left pair with a higher priority.
    * balanced pair is default to be left pair, so fit the current case if top is a balanced pair
    */
-  } else if (top->is_left &&  top->pair->priority >= pn->pair->priority) {
+  } else if (top->is_left &&  top->pair->priority > pn->pair->priority) {
     show("discard the right part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
-  /* l1 < r2, r1 < r2: discard the top pair if the current pair is a different right pair with a higher priority
+  /* l1 <= r2, r1 <= r2: discard the top pair if the current pair is a different right pair with a higher priority
    * balanced pair is default to be left pair, so fit the current case if pn is not a balanced pair
    */
-  } else if (!pn->is_left && top->pair->priority < pn->pair->priority) {
+  } else if (!pn->is_left && top->pair->priority <= pn->pair->priority) {
     show("discard the left part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
     pop_right(q);
     return true;
@@ -218,7 +218,7 @@ static bool pair_cmp(parse_arg_t *arg, pair_t *pair, bool is_trip, bool is_left,
     pn           = malloc(sizeof(*pn));
     pn->pair     = pair;
     pn->is_left  = is_left;
-    pn->on_left  = line_idx <= ctx->cur_line && save <= ctx->cur_col;
+    pn->on_left  = line_idx < ctx->cur_line || (line_idx == ctx->cur_line && save < ctx->cur_col);
     pn->is_trip  = is_trip;
     pn->line_idx = line_idx;
     pn->col_idx  = save;
@@ -372,24 +372,22 @@ static bool merge_cache(context_t *ctx, nodes_dqueue *res, nodes_dnode *cdn, pai
 /**
  * @brief merge the cache dequeue of current line to the result dequeue
  *
- * @param ctx: context
+ * @param pair: pair to be searched
  * @param res: global search result dequeue
  * @param cdn: cache dequeue node
  * @return bound pair node or NULL
  */
-static pairs_dnode *merge_cur_line(context_t *ctx, nodes_dqueue *res, nodes_dnode *cdn) {
-  pair_t *pair = ctx->pair;    /* search pair */
-  size_t  col  = ctx->cur_col; /* cursor column */
-
+static pairs_dnode *merge_cur_line(pair_t *pair, nodes_dqueue *res, nodes_dnode *cdn) {
   pair_node_t *pn;  /* pair node */
   pairs_dnode *pdn; /* dequeue node that stores pair node */
   pairs_dnode *pdn2;
 
-  bool on_left = true; /* whether the current pair node is on the left the cursor */
+  bool on_left = true;
   while (cdn != NULL) {
     pdn = cdn->data;
     pn  = pdn->data;
-    if (on_left && pn->col_idx >= col) {
+    if (pair != NULL && on_left && !pn->on_left) {
+      show("first bracket on the right of current line: %s\n", get_pair(pn));
       on_left = false;
       if (res->tail != NULL) {
         pdn2 = res->tail->data;
@@ -406,8 +404,8 @@ static pairs_dnode *merge_cur_line(context_t *ctx, nodes_dqueue *res, nodes_dnod
 
   remove_single_pair(res);
 
-  /* recheck in case that the cursor is still on the right of top pair of the stack */
-  if (on_left && res->tail != NULL) {
+  /* recheck in case such case: (' */
+  if (pair != NULL && on_left && res->tail != NULL) {
     pdn2 = res->tail->data;
     pn   = pdn2->data;
     /* triplet is default left */
@@ -436,6 +434,7 @@ static void merge_results(void *arg) {
 
   pair_node_t *pn;      /* pair node */
   pairs_dnode *restart; /* pair node to restart search */
+  pairs_dnode *next;    /* next pair node of restart */
   nodes_dnode *cdn;     /* cache dequeue node */
   pair_t      *bound = NULL;
 
@@ -447,16 +446,23 @@ static void merge_results(void *arg) {
     cdn = lines[i].cache->head;
     if (bound == NULL && i == ctx->cur_line) {
       show("process current line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
-      restart = merge_cur_line(ctx, res, cdn);
+      restart = merge_cur_line(ctx->pair, res, cdn);
       if (restart != NULL) {
         pn    = restart->data;
+        next  = restart->next;
         bound = pn->pair;
-        show("restart at line: %s, col: %d, pair: %s\n", ctx->lines[pn->line_idx], pn->line_idx, get_pair(pn));
+        i     = pn->line_idx;
+        show("restart at line: %s, col: %d, pair: %s\n", ctx->lines[pn->line_idx], pn->col_idx, get_pair(pn));
         clear_dequeue(res);
-        if (!merge_pairs(ctx, res, restart->next, bound)) {
+
+        if (next == NULL && i != ctx->cur_line - 1) {
+          next = lines[i + 1].pairs->head;
+        }
+
+        if (!merge_pairs(ctx, res, next, bound)) {
           break;
         }
-        i  = pn->line_idx + 1;
+        i  += (next ? 1 : 2);
       } else {
         ++i;
       }
