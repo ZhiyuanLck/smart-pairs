@@ -125,9 +125,13 @@ static void remove_single_pair(nodes_dqueue *q) {
  * @return true if need to judge more otherwise false
  */
 static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
+#ifdef TEST
+  const char *pre = (preprocess ? "#fg[magenta]PREPROCESS#rs" : "#fg[magenta]PROCESS#rs");
+#endif
+
   if (q->tail == NULL) {
     push_right(q, dn);
-    show("PAIR: empty stack\n");
+    show("%s: empty stack, PUSH\n", pre);
     return false;
   }
 
@@ -137,7 +141,7 @@ static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
 
   /* first, do not handle balanced pairs if is in preprocess */
   if (preprocess && (top->pair->balanced || pn->pair->balanced)) {
-    show("PAIR: ignore balanced pair in preprocess\n");
+    show("%s: IGNORE balanced pair in preprocess\n", pre);
     push_right(q, dn);
     return false;
   }
@@ -145,27 +149,30 @@ static bool parse_pair_next(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
   /* handle cases when two pairs are equal */
   if (top->pair == pn->pair) {
     if (pn->pair->balanced || (top->is_left && !pn->is_left)) {
-      show("PAIR: offset the matched left pair: %s\n", get_pair(top));
+      show("%s: OFFSET the matched left pair: #fg[red]%s#rs\n", pre, get_pair(top));
       pop_right(q);
     } else {
-      show("PAIR: push the same pair: %s\n", get_pair(top));
+      show("%s: PUSH the same pair: #fg[red]%s#rs\n", pre, get_pair(top));
       push_right(q, dn);
     }
   /* l1 > l2, l1 > r2: discard current pair if the top pair is a different left pair with a higher priority.
    * balanced pair is default to be left pair, so fit the current case if top is a balanced pair
    */
   } else if (top->is_left &&  top->pair->priority > pn->pair->priority) {
-    show("PAIR: discard the right part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
+    show("%s: DISCARD the right part: top pair #fg[red]%s #fg[cyan]%d#rs, cur pair #fg[red]%s #fg[cyan]%d#rs\n",
+        pre, get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
   /* l1 <= r2, r1 <= r2: discard the top pair if the current pair is a different right pair with a higher priority
    * balanced pair is default to be left pair, so fit the current case if pn is not a balanced pair
    */
   } else if (!pn->is_left && top->pair->priority <= pn->pair->priority) {
-    show("PAIR: discard the left part: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
+    show("%s: DISCARD the left part: top pair #fg[red]%s #fg[cyan]%d#rs, cur pair #fg[red]%s #fg[cyan]%d#rs\n",
+        pre, get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
     pop_right(q);
     return true;
   /* l1 < l2, r1 > r2 or pn is a balanced pair */
   } else {
-    show("PAIR: push pair: top pair %s %d, cur pair %s %d\n", get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
+    show("%s: PUSH pair: top pair #fg[red]%s #fg[cyan]%d#rs, cur pair #fg[red]%s #fg[cyan]%d#rs\n",
+        pre, get_pair(top), top->pair->priority, get_pair(pn), pn->pair->priority);
     push_right(q, dn);
   }
 
@@ -223,8 +230,8 @@ static bool pair_cmp(parse_arg_t *arg, pair_t *pair, bool is_trip, bool is_left,
     pn->col_idx  = save;
     line_node_t *cur_ln = arg->lines + line_idx;
     push_right(cur_ln->pairs, pn);
+    show("#fg[green]FIND PAIR#rs: #fg[red]%s#rs\n", get_pair(pn));
     parse_pair(cur_ln->cache, cur_ln->pairs->tail, true);
-    show("line: %s, char: %c, find left %s\n", ctx->lines[line_idx],  ctx->lines[line_idx][save], get_pair(pn));
     *col_idx = col;
     return true;
   }
@@ -256,8 +263,9 @@ static void find_pair(void *arg) {
     col         = 0;
     line        = ctx->lines[i];
 
+    show("#fg[yellow]START SEARCH#rs line #fg[cyan]%d#rs: #fg[red]%s#rs\n", i, line);
     while (line[col] != '\0') {
-      show("search line %d, col %lu, %c\n", i, col, line[col]);
+      show("#fg[blue]CHECK COL #fg[cyan]%lu#rs: #fg[red]%c#rs\n", col, line[col]);
       /* ignore escaped pattern */
       if (line[col] == '\\') {
         ++col;
@@ -284,7 +292,7 @@ static void find_pair(void *arg) {
     }
 
     remove_single_pair(parg->lines[i].cache);
-    show("search end\n");
+    show("#fg[yellow]END SEARCH#rs\n\n");
 
     parg->lines[i].done = true;
   }
@@ -301,7 +309,7 @@ static void find_pair(void *arg) {
 static bool check_and_parse(nodes_dqueue *res, pairs_dnode *pdn, pair_t *bound) {
   pairs_dnode *pdn2;
   pair_node_t *pn = pdn->data;
-  show("check and parse pair %s\n", get_pair(pn));
+  show("#fg[blue]CHECK BOUND AND PARSE PAIR #fg[red]%s#rs\n", get_pair(pn));
   if (pn->pair == bound && (!pn->is_left || pn->pair->balanced)) {
     if (res->tail == NULL) {
       return false;
@@ -337,9 +345,9 @@ static bool merge_pairs(context_t *ctx, nodes_dqueue *res, pairs_dnode *pdn, pai
   pair_node_t *pn;  /* pair node */
   while (pdn != NULL) {
     pn = pdn->data;
-    show("merge pairs node %s\n", get_pair(pn));
+    // show("merge pairs node %s\n", get_pair(pn));
     if (!check_and_parse(res, pdn, bound)) {
-      show("reach the bound %s\n", bound->right);
+      show("#fg[green]REACH THE BOUND #fg[red]%s#rs\n", bound->right);
       return false;
     }
     pdn = pdn->next;
@@ -391,7 +399,7 @@ static pairs_dnode *merge_cur_line(pair_t *pair, nodes_dqueue *res, nodes_dnode 
   while (cdn != NULL) {
     pdn = cdn->data;
     pn  = pdn->data;
-    show("process pair %s of current line\n", get_pair(pn));
+    show("#fg[blue]MERGE PAIR #fg[red]%s#rs of current line\n", get_pair(pn));
     if (pair != NULL && on_left && !pn->on_left) {
       show("first bracket on the right of current line: %s\n", get_pair(pn));
       on_left = false;
@@ -444,15 +452,26 @@ static void merge_results(void *arg) {
   nodes_dnode *cdn;     /* cache dequeue node */
   pair_t      *bound = NULL;
 
-  show("--> start merging results...\n");
+  show("#fg[yellow]START MERGING#rs results...\n");
   int i = 0;
   while (i < ctx->num_lines) {
     while (!lines[i > 0 ? i - 1 : 0].done);
 
     cdn  = lines[i].cache->head;
     next = lines[i].pairs->head;
-    if (bound == NULL && i == ctx->cur_line) {
-      show("process current line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
+    if (bound) {
+      show("#fg[magenta]PARSE#rs [bounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
+          i + 1, ctx->num_lines, ctx->lines[i]);
+      if (!merge_pairs(ctx, res, next, bound)) {
+        break;
+      }
+    } else if (i != ctx->cur_line) {
+      show("#fg[magenta]PARSE#rs [unbounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
+          i + 1, ctx->num_lines, ctx->lines[i]);
+      merge_cache(ctx, res, cdn, bound);
+    } else {
+      show("#fg[magenta]PARSE#rs current line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
+          i + 1, ctx->num_lines, ctx->lines[i]);
       restart = merge_cur_line(ctx->pair, res, cdn);
       if (restart != NULL) {
         pn    = restart->data;
@@ -465,23 +484,15 @@ static void merge_results(void *arg) {
           ++i;
         }
 
-        show("--> restart at line: %s, col: %d, pair: %s\n", ctx->lines[pn->line_idx], pn->col_idx, get_pair(pn));
+        show("#fg[green]RESTART#rs at line: #fg[red]%s#rs, col: #fg[cyan]%d#rs, pair: #fg[red]%s#rs\n",
+            ctx->lines[pn->line_idx], pn->col_idx, get_pair(pn));
         clear_dequeue(res);
       }
     }
 
-    if (bound) {
-      show("bound: process line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
-      if (!merge_pairs(ctx, res, next, bound)) {
-        break;
-      }
-    } else if (i != ctx->cur_line) {
-      show("unbound: process line %d/%d: %s\n", i + 1, ctx->num_lines, ctx->lines[i]);
-      merge_cache(ctx, res, cdn, bound);
-    }
-
     ++i;
   }
+  show("#fg[yellow]END MERGE#rs\n\n");
 
   ctx->stop = true;
 }

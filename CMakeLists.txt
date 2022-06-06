@@ -9,14 +9,14 @@ include_directories(c tests/c)
 
 if(TEST_PAIR)
   set(CMAKE_BUILD_TYPE Debug)
-  add_library(parser SHARED c/parser.c c/dequeue.c c/msg.c)
+  add_library(parser SHARED c/parser.c c/dequeue.c c/msg.c c/thread_pool.c)
   target_compile_definitions(parser PUBLIC TEST)
 else()
-  add_library(parser SHARED c/parser.c c/dequeue.c)
+  add_library(parser SHARED c/parser.c c/dequeue.c c/thread_pool.c)
 endif()
 
 target_link_libraries(parser PRIVATE Threads::Threads)
-set_property(TARGET parser PROPERTY C_STANDARD 99)
+set_property(TARGET parser PROPERTY C_STANDARD 11)
 
 set_target_properties(parser
   PROPERTIES
