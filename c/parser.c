@@ -477,7 +477,9 @@ static void merge_results(void *arg) {
   pairs_dnode *restart; /* pair node to restart search */
   pairs_dnode *next;    /* next pair node of restart */
   nodes_dnode *cdn;     /* cache dequeue node */
-  pair_t      *bound = NULL;
+
+  pair_t *bound     = NULL; /* bound pair */
+  int     bound_idx = -1;   /* line index of bound pair */
 
   show("#fg[yellow]START MERGING#rs results...\n");
   int i = 0;
@@ -485,17 +487,22 @@ static void merge_results(void *arg) {
     while (!lines[i > 0 ? i - 1 : 0].done);
 
     cdn  = lines[i].cache->head;
-    next = lines[i].pairs->head;
+    /* reparse the pair dequeue */
     if (bound) {
       show("#fg[green]PARSE#rs [bounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
           i + 1, ctx->num_lines, ctx->lines[i]);
       if (!merge_pairs(ctx, res, next, bound)) {
         break;
       }
+      if (i + 1 < ctx->num_lines) {
+        next = lines[i + 1].pairs->head;
+      }
+    /* normal lines */
     } else if (i != ctx->cur_line) {
       show("#fg[green]PARSE#rs [unbounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
           i + 1, ctx->num_lines, ctx->lines[i]);
       merge_cache(ctx, res, cdn, bound);
+    /* current line */
     } else {
       show("#fg[green]PARSE#rs [unbounded] current line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
           i + 1, ctx->num_lines, ctx->lines[i]);
@@ -515,6 +522,7 @@ static void merge_results(void *arg) {
         show("#fg[green]RESTART#rs at line: #fg[red]%s#rs, col: #fg[cyan]%d#rs, pair: #fg[red]%s#rs\n",
             ctx->lines[pn->line_idx], pn->col_idx, get_pair(pn));
         clear_dequeue(res);
+        continue; /* the value of i has been updated, avoid ++i */
       }
     }
 
