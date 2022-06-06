@@ -9,9 +9,11 @@
 #ifdef TEST
 #include <stdio.h>
 #include "msg.h"
-#define show(...) add_msg(__FILE__, __LINE__, __VA_ARGS__)
+#define show(...) add_msg(__FILE__, __LINE__, true, __VA_ARGS__)
+#define nshow(...) add_msg(__FILE__, __LINE__, false, __VA_ARGS__)
 #else
 #define show(...)
+#define nshow(...)
 #endif /* TEST */
 
 

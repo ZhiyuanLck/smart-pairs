@@ -118,16 +118,21 @@ msg_queue_t *msgq = NULL;
  *
  * @param file source file name
  * @param lineno line index of the source file
+ * @param verbose whether to print file and line number
  * @param format message
  */
-void add_msg(const char *file, int lineno, const char *format, ...) {
+void add_msg(const char *file, int lineno, bool verbose, const char *format, ...) {
   int     l1; /* length of file info */
   int     l2; /* length of format */
   va_list args;
   char   *msg;
 
-  file = trunc_file(file);
-  l1 = snprintf(NULL, 0, "%s:%d: ", file, lineno);
+  if (verbose) {
+    file = trunc_file(file);
+    l1 = snprintf(NULL, 0, "%s:%d: ", file, lineno);
+  } else {
+    l1 = 0;
+  }
 
   va_start(args, format);
   l2 = vsnprintf(NULL, 0, format, args);
@@ -145,10 +150,11 @@ void add_msg(const char *file, int lineno, const char *format, ...) {
   va_start(args, format);
   l2 = vsnprintf(NULL, 0, new_fm, args);
   va_end(args);
-  // fprintf(stderr, "**%s\n", new_fm);
 
   msg = malloc((l1 + l2 + 1) * sizeof(char));
-  sprintf(msg, "%s:%d: ", file, lineno);
+  if (verbose) {
+    sprintf(msg, "%s:%d: ", file, lineno);
+  }
 
   va_start(args, format);
   vsprintf(msg + l1, new_fm, args);

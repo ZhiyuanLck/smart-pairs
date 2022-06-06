@@ -1,5 +1,6 @@
 #ifndef MSG_QUEUE_H
 #define MSG_QUEUE_H
+#include <stdbool.h>
 
 typedef struct msg_node {
   struct msg_node *next;
@@ -13,7 +14,7 @@ typedef struct msg_queue {
 
 /* extern msg_queue_t *msgq; */
 
-void add_msg(const char *file, int lineno, const char* format, ...);
+void add_msg(const char *file, int lineno, bool verbose, const char* format, ...);
 void destroy_msg();
 void clear_msg();
 void show_msg();

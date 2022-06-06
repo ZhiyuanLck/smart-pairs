@@ -6,6 +6,28 @@
 static const char *get_pair(pair_node_t *pn) {
   return pn->is_trip ? pn->pair->trip_pair : (pn->is_left ? pn->pair->left : pn->pair->right);
 }
+
+static void show_pairs(pairs_dnode *pdn) {
+  pair_node_t *pn;
+  while (pdn != NULL) {
+    pn = pdn->data;
+    pdn = pdn->next;
+    nshow("#fg[red]%s#rs%s", get_pair(pn), pdn ? " -> " : "");
+  }
+  nshow("\n");
+}
+
+static void show_cache(nodes_dnode *cdn) {
+  pairs_dnode *pdn;
+  pair_node_t *pn;
+  while (cdn != NULL) {
+    pdn = cdn->data;
+    pn = pdn->data;
+    cdn = cdn->next;
+    nshow("#fg[red]%s#rs%s", get_pair(pn), cdn ? " -> " : "");
+  }
+  nshow("\n");
+}
 #endif
 
 /**
@@ -231,7 +253,11 @@ static bool pair_cmp(parse_arg_t *arg, pair_t *pair, bool is_trip, bool is_left,
     line_node_t *cur_ln = arg->lines + line_idx;
     push_right(cur_ln->pairs, pn);
     show("#fg[green]FIND PAIR#rs: #fg[red]%s#rs\n", get_pair(pn));
+    show("[current pairs] ");
+    show_pairs(cur_ln->pairs->head);
     parse_pair(cur_ln->cache, cur_ln->pairs->tail, true);
+    show("[current cache] ");
+    show_cache(cur_ln->cache->head);
     *col_idx = col;
     return true;
   }
@@ -342,10 +368,9 @@ static bool merge_pairs(context_t *ctx, nodes_dqueue *res, pairs_dnode *pdn, pai
   if (pdn == NULL) {
     return false;
   }
-  pair_node_t *pn;  /* pair node */
+  show("#fg[magenta]MERGE#rs pair dequeue: ");
+  show_pairs(pdn);
   while (pdn != NULL) {
-    pn = pdn->data;
-    // show("merge pairs node %s\n", get_pair(pn));
     if (!check_and_parse(res, pdn, bound)) {
       show("#fg[green]REACH THE BOUND #fg[red]%s#rs\n", bound->right);
       return false;
@@ -370,11 +395,11 @@ static bool merge_cache(context_t *ctx, nodes_dqueue *res, nodes_dnode *cdn, pai
   if (cdn == NULL) {
     return true;
   }
-  pair_node_t *pn;  /* pair node */
+  show("#fg[magenta]MERGE#rs cache dequeue: ");
+  show_cache(cdn);
   pairs_dnode *pdn; /* dequeue node that stores pair node */
   while (cdn != NULL) {
     pdn = cdn->data;
-    pn  = pdn->data;
     parse_pair(res, pdn, false);
     cdn = cdn->next;
   }
@@ -395,11 +420,13 @@ static pairs_dnode *merge_cur_line(pair_t *pair, nodes_dqueue *res, nodes_dnode 
   pairs_dnode *pdn; /* dequeue node that stores pair node */
   pairs_dnode *pdn2;
 
+  show("#fg[magenta]MERGE#rs cache dequeue of [current line]: ");
+  show_cache(cdn);
   bool on_left = true;
   while (cdn != NULL) {
     pdn = cdn->data;
     pn  = pdn->data;
-    show("#fg[blue]MERGE PAIR #fg[red]%s#rs of current line\n", get_pair(pn));
+    show("#fg[magenta]MERGE#rs pair #fg[red]%s#rs of current line\n", get_pair(pn));
     if (pair != NULL && on_left && !pn->on_left) {
       show("first bracket on the right of current line: %s\n", get_pair(pn));
       on_left = false;
@@ -460,17 +487,17 @@ static void merge_results(void *arg) {
     cdn  = lines[i].cache->head;
     next = lines[i].pairs->head;
     if (bound) {
-      show("#fg[magenta]PARSE#rs [bounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
+      show("#fg[green]PARSE#rs [bounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
           i + 1, ctx->num_lines, ctx->lines[i]);
       if (!merge_pairs(ctx, res, next, bound)) {
         break;
       }
     } else if (i != ctx->cur_line) {
-      show("#fg[magenta]PARSE#rs [unbounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
+      show("#fg[green]PARSE#rs [unbounded] line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
           i + 1, ctx->num_lines, ctx->lines[i]);
       merge_cache(ctx, res, cdn, bound);
     } else {
-      show("#fg[magenta]PARSE#rs current line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
+      show("#fg[green]PARSE#rs [unbounded] current line #fg[cyan]%d/%d#rs: #fg[red]%s#rs\n",
           i + 1, ctx->num_lines, ctx->lines[i]);
       restart = merge_cur_line(ctx->pair, res, cdn);
       if (restart != NULL) {
@@ -480,6 +507,7 @@ static void merge_results(void *arg) {
         i     = pn->line_idx;
 
         if (next == NULL && i < ctx->num_lines - 1) {
+          show("#fg[green]MOVE#rs to head node of next line\n");
           next = lines[i + 1].pairs->head;
           ++i;
         }
