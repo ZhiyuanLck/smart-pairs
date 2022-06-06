@@ -34,18 +34,23 @@ void test_helper(const char *file, int lineno, const char *expect, size_t line_i
 
   to_string(arg->res, str, false);
   file = trunc_file(file);
-  if (strcmp(expect, str) == 0) {
+  bool has_error = strcmp(expect, str) != 0;
+  if (!has_error) {
     clear_msg();
   } else {
     show_msg();
     fprintf(stderr, "%s:%d: ", file, lineno);
     fprintf(stderr, "%s expect \"%s\", but get \"%s\"\n", "result", expect, str);
     show_line(file, lineno);
-    exit(1);
   }
 
   destroy_arg(arg);
   destroy_context(ctx);
+
+  if (has_error) {
+    destroy_msg();
+    exit(1);
+  }
 }
 
 #define test_lines(...) test_helper(__FILE__, __LINE__, __VA_ARGS__)
@@ -73,6 +78,7 @@ int main() {
   test_lines("*/)", 0, 1, 2, "/*(", "*/)");
   test_lines("(",   0, 2, 2, "/*(", "*/)");
   test_lines("(",   0, 3, 2, "/*(", "*/)");
+  test_lines(")",   1, 2, 2, "/*(", "*/)");
   test_lines("(",   0, 2, 2, "/*",  "(*/)");
   test_lines(")(",  0, 2, 3, "/*",  "())", "(*/)");
   test_lines(")(",  1, 2, 3, "/*",  "())", "(*/)");
