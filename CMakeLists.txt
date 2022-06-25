@@ -9,16 +9,16 @@ set(files c/parser.c c/dequeue.c)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # pthread
-if(TEST_PAIR OR THREADS)
+if(THREADS)
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   find_package(Threads REQUIRED)
-  include_directories(tests/c)
   list(APPEND files c/thread_pool.c)
 endif()
 
 # test
 if(TEST_PAIR)
   set(CMAKE_BUILD_TYPE Debug)
+  include_directories(tests/c)
   list(APPEND files c/msg.c)
 else()
   set(CMAKE_BUILD_TYPE Release)
@@ -32,16 +32,13 @@ set_target_properties(parser
     RUNTIME_OUTPUT_DIRECTORY lib
 )
 
-if(TEST_PAIR OR THREADS)
+if(THREADS)
   target_link_libraries(parser PRIVATE Threads::Threads)
+  target_compile_definitions(parser PUBLIC THREADS)
 endif()
 
 if(TEST_PAIR)
   target_compile_definitions(parser PUBLIC TEST)
   enable_testing()
   add_subdirectory(tests/c)
-endif()
-
-if(THREADS)
-  target_compile_definitions(parser PUBLIC THREADS)
 endif()

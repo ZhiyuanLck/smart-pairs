@@ -15,11 +15,11 @@
  * @param st: string representation of stack
  */
 void test_one_line_helper(const char *file, int lineno, const char *line, const char *pos, const char *st) {
-  char         str1[100];
-  char         str2[100];
-  const char  *s[] = {line};
-  context_t   *ctx = new_context(s, 1, 4);
-  parse_arg_t *arg = parse(ctx);
+  char          str1[100];
+  char          str2[100];
+  const char   *s[] = {line};
+  context_t    *ctx = new_context(s, 1, 4);
+  common_arg_t *arg = parse(ctx);
 
   to_string(arg->lines->pairs, str1, true);
   bool pos_cond = strcmp(pos, str1) == 0;
@@ -89,4 +89,5 @@ int main() {
   test_one_line("([{)", "([{)", "");
 
   destroy_msg();
+  destroy_tp();
 }

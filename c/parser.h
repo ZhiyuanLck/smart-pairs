@@ -76,16 +76,20 @@ typedef struct line_node {
   bool          done;  /* whether all the prepare work of the current line is done */
 } line_node_t;
 
-typedef struct parse_arg {
+typedef struct common_arg {
   context_t    *ctx;   /* current context */
   line_node_t  *lines; /* array of line nodes */
   nodes_dqueue *res;   /* parsing result */
+} common_arg_t;
+
+typedef struct parse_arg {
+  common_arg_t *carg;  /* common arguments */
   size_t        start; /* start of the range of lines, [start, end) */
   size_t        end;   /* end of the range of lines [start, end) */
 } parse_arg_t;
 
 #ifdef TEST
-parse_arg_t *
+common_arg_t *
 #else
 void
 #endif

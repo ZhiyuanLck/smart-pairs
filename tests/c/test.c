@@ -1,6 +1,11 @@
 #include "test.h"
+#ifdef THREADS
+#include "threads.h"
+#endif /* THREADS */
 #include <stdlib.h>
 #include <stdio.h>
+
+thread_pool_t *tp = NULL;
 
 /* create a new pair struct for test */
 static pair_t *new_pair(const char* left, const char *right, const char *trip_pair, int priority, bool triplet, bool cross_line, bool balanced) {
@@ -30,7 +35,10 @@ context_t *new_context(const char **lines, size_t num_lines, size_t pair_idx) {
   pairs[7] = new_pair("$",  "$",  NULL,     0,  false, true,  true);
 
   ctx = malloc(sizeof(*ctx));
-  ctx->tp         = NULL;
+#ifdef THREADS
+  tp = tp ? tp : thread_pool_create(5);
+#endif /* THREADS */
+  ctx->tp         = tp;
   ctx->ignore     = NULL;
   ctx->lines      = lines;
   ctx->pair       = pairs[pair_idx];
@@ -53,6 +61,12 @@ void destroy_context(context_t *ctx) {
   }
   free(ctx->pairs);
   free(ctx);
+}
+
+void destroy_tp() {
+#ifdef THREADS
+  thread_pool_destroy(tp);
+#endif /* THREADS */
 }
 
 /**

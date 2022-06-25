@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifdef THREADS
+#include "threads.h"
+#endif /* THREADS */
+
 #ifdef TEST
 static const char *get_pair(pair_node_t *pn) {
   return pn->is_trip ? pn->pair->trip_pair : (pn->is_left ? pn->pair->left : pn->pair->right);
@@ -28,7 +32,7 @@ static void show_cache(nodes_dnode *cdn) {
   }
   nshow("\n");
 }
-#endif
+#endif /* TEST */
 
 /**
  * @brief create a list of line nodes according to the number of lines
@@ -88,14 +92,12 @@ static void destroy_lines(line_node_t *lines, int num) {
  * @param end: end of the line index
  * @return arguments
  */
-static parse_arg_t *new_arg(context_t *ctx) {
-  parse_arg_t *arg;
+static common_arg_t *new_arg(context_t *ctx) {
+  common_arg_t *arg;
   arg        = malloc(sizeof(*arg));
   arg->lines = new_lines(ctx->num_lines);
   arg->res   = new_dequeue();
   arg->ctx   = ctx;
-  arg->start = 0;
-  arg->end   = 0;
   return arg;
 }
 
@@ -104,7 +106,7 @@ static parse_arg_t *new_arg(context_t *ctx) {
  *
  * @param arg: arguments
  */
-static void destroy_arg(parse_arg_t *arg) {
+static void destroy_arg(common_arg_t *arg) {
   destroy_lines(arg->lines, arg->ctx->num_lines);
   destroy_dequeue(arg->res);
   free(arg);
@@ -216,21 +218,21 @@ static void parse_pair(nodes_dqueue *q, pairs_dnode *dn, bool preprocess) {
 /**
  * @brief compare the pair with the line and return the updated index or 0 for no match
  *
- * @param arg: common arguments
+ * @param carg: common arguments
  * @param pair: pair object
  * @param is_trip: if is the triplet pair
  * @param is_left: if is the left pair
  * @param line_idx: line index
  * @param col_idx: line column index
  */
-static bool pair_cmp(parse_arg_t *arg, pair_t *pair, bool is_trip, bool is_left, size_t line_idx, size_t *col_idx) {
+static bool pair_cmp(common_arg_t *carg, pair_t *pair, bool is_trip, bool is_left, size_t line_idx, size_t *col_idx) {
   const char *p = is_trip ? pair->trip_pair : (is_left ? pair->left : pair->right);
   /* incase the right pair is NULL */
   if (p == NULL) {
     return false;
   }
 
-  context_t  *ctx  = arg->ctx;
+  context_t  *ctx  = carg->ctx;
   const char *line = ctx->lines[line_idx];
   size_t      save = *col_idx;
   size_t      col  = *col_idx;
@@ -250,7 +252,7 @@ static bool pair_cmp(parse_arg_t *arg, pair_t *pair, bool is_trip, bool is_left,
     pn->is_trip  = is_trip;
     pn->line_idx = line_idx;
     pn->col_idx  = save;
-    line_node_t *cur_ln = arg->lines + line_idx;
+    line_node_t *cur_ln = carg->lines + line_idx;
     push_right(cur_ln->pairs, pn);
     show("#fg[green]FIND PAIR#rs: #fg[red]%s#rs\n", get_pair(pn));
     show("[current pairs] ");
@@ -276,13 +278,14 @@ static void find_pair(void *arg) {
     return;
   }
 
-  parse_arg_t *parg = arg;
-  context_t   *ctx  = parg->ctx;
-  pair_t      *pair; /* current pair in the loop */
-  const char  *line; /* current line */
-  const char  *p;    /* pair string */
-  size_t       save; /* index before cmp */
-  size_t       col;  /* index of line */
+  parse_arg_t  *parg = arg;
+  common_arg_t *carg = parg->carg;
+  context_t    *ctx  = carg->ctx;
+  pair_t       *pair; /* current pair in the loop */
+  const char   *line; /* current line */
+  const char   *p;    /* pair string */
+  size_t        save; /* index before cmp */
+  size_t        col;  /* index of line */
   // size_t       c;    [> index after cmp <]
 
   for (int i = parg->start; i < parg->end; i++) {
@@ -304,11 +307,11 @@ static void find_pair(void *arg) {
       save = col;
       for (int j = 0; j < ctx->num_pairs; j++) {
         pair = ctx->pairs[j];
-        if (pair->triplet && pair_cmp(arg, pair, true, true, i, &col)) {
+        if (pair->triplet && pair_cmp(carg, pair, true, true, i, &col)) {
           break;
-        } else if (pair_cmp(arg, pair, false, true, i, &col)) {
+        } else if (pair_cmp(carg, pair, false, true, i, &col)) {
           break;
-        } else if (pair_cmp(arg, pair, false, false, i, &col)) {
+        } else if (pair_cmp(carg, pair, false, false, i, &col)) {
           break;
         }
       }
@@ -317,11 +320,12 @@ static void find_pair(void *arg) {
       }
     }
 
-    remove_single_pair(parg->lines[i].cache);
+    remove_single_pair(carg->lines[i].cache);
     show("#fg[yellow]END SEARCH#rs\n\n");
 
-    parg->lines[i].done = true;
+    carg->lines[i].done = true;
   }
+  free(parg);
 }
 
 /**
@@ -461,13 +465,12 @@ static pairs_dnode *merge_cur_line(pair_t *pair, nodes_dqueue *res, nodes_dnode 
 /**
  * @brief merge all results
  *
- * @param arg: arguments of type parse_arg_t
+ * @param arg: arguments of type common_arg_t
  */
-static void merge_results(void *arg) {
-  parse_arg_t *parg  = arg;
-  context_t   *ctx   = parg->ctx;
-  dequeue_t   *res   = parg->res;
-  line_node_t *lines = parg->lines;
+static void merge_results(common_arg_t *carg) {
+  context_t    *ctx   = carg->ctx;
+  dequeue_t    *res   = carg->res;
+  line_node_t  *lines = carg->lines;
 
   if (ctx->stop) {
     return;
@@ -481,10 +484,14 @@ static void merge_results(void *arg) {
   pair_t *bound     = NULL; /* bound pair */
   int     bound_idx = -1;   /* line index of bound pair */
 
-  show("#fg[yellow]START MERGING#rs results...\n");
   int i = 0;
   while (i < ctx->num_lines) {
-    while (!lines[i > 0 ? i - 1 : 0].done);
+    show("#fg[yellow]START MERGING#rs results of line #fg[blue]%d#rs ...\n", i);
+    // while (i > 0 && !lines[i - 1].done);
+    /* while (!lines[i > 0 ? i - 1 : 0].done) { */
+    while (!lines[i].done) {
+      /* show("#fg[red]line %d is not ready\n", i); */
+    }
 
     cdn  = lines[i].cache->head;
     /* reparse the pair dequeue */
@@ -534,26 +541,39 @@ static void merge_results(void *arg) {
 }
 
 #ifdef TEST
-parse_arg_t *
+common_arg_t *
 #else
 void
 #endif
 parse(context_t *ctx) {
-  parse_arg_t *arg = new_arg(ctx);
-  size_t       sep = 1;
-  size_t       i   = 0;
+  parse_arg_t  *parg;
+  common_arg_t *carg = new_arg(ctx);
+  size_t        sep = 1;
+  size_t        i   = 0;
 
   while (i < ctx->num_lines) {
-    arg->start = i;
-    arg->end   = i + sep > ctx->num_lines ? ctx->num_lines : i + sep;
-    find_pair(arg);
+    parg = malloc(sizeof(*parg));
+    parg->carg  = carg;
+    parg->start = i;
     i += sep;
+    parg->end   = (i >= ctx->num_lines) ? ctx->num_lines : i;
+
+#ifdef THREADS
+    show("#fg[yellow]START SEARCH#rs line #fg[cyan][%d, %d) / %d#rs\n", parg->start, parg->end, ctx->num_lines);
+    thread_pool_add_work(ctx->tp, find_pair, parg);
+#else
+    find_pair(parg);
+#endif /* THREADS */
   }
 
-  merge_results(arg);
+  merge_results(carg);
+
+#ifdef THREADS
+  thread_pool_wait(ctx->tp);
+#endif /* THREADS */
 #ifdef TEST
-  return arg;
+  return carg;
 #else
-  destroy_arg(arg);
+  destroy_arg(carg);
 #endif
 }

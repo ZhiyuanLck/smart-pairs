@@ -1,4 +1,6 @@
 #include "msg.h"
+#include <unistd.h>
+#include <sys/syscall.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -129,7 +131,7 @@ void add_msg(const char *file, int lineno, bool verbose, const char *format, ...
 
   if (verbose) {
     file = trunc_file(file);
-    l1 = snprintf(NULL, 0, "%s:%d: ", file, lineno);
+    l1 = snprintf(NULL, 0, "%s:%d [thread %ld]: ", file, lineno, syscall(SYS_gettid));
   } else {
     l1 = 0;
   }
@@ -153,7 +155,8 @@ void add_msg(const char *file, int lineno, bool verbose, const char *format, ...
 
   msg = malloc((l1 + l2 + 1) * sizeof(char));
   if (verbose) {
-    sprintf(msg, "%s:%d: ", file, lineno);
+    sprintf(msg, "%s:%d [thread %ld]: ", file, lineno, syscall(SYS_gettid));
+    // sprintf(msg, "%s:%d: ", file, lineno);
   }
 
   va_start(args, format);
@@ -167,7 +170,7 @@ void add_msg(const char *file, int lineno, bool verbose, const char *format, ...
   node->next = NULL;
   node->msg  = msg;
   /* show message in time */
-  // fprintf(stdout, "%s", msg);
+  /* fprintf(stdout, "%s", msg); */
 
   if (msgq == NULL) {
     msgq       = malloc(sizeof(*msgq));

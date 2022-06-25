@@ -30,7 +30,7 @@ void test_helper(const char *file, int lineno, const char *expect, size_t line_i
   }
   va_end(args);
 
-  parse_arg_t *arg = parse(ctx);
+  common_arg_t *arg = parse(ctx);
 
   to_string(arg->res, str, false);
   file = trunc_file(file);
@@ -84,4 +84,5 @@ int main() {
   test_lines(")(",  1, 2, 3, "/*",  "())", "(*/)");
 
   destroy_msg();
+  destroy_tp();
 }
