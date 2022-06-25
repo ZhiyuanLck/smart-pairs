@@ -6,6 +6,9 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdbool.h>
+#include <pthread.h>
+
+pthread_mutex_t msg_mutex;
 
 static bool match(const char *s1, const char *s2) {
   while (*s1 != '\0' && *s2 != '\0') {
@@ -176,8 +179,10 @@ void add_msg(const char *file, int lineno, bool verbose, const char *format, ...
     msgq       = malloc(sizeof(*msgq));
     msgq->head = NULL;
     msgq->tail = NULL;
+    pthread_mutex_init(&msg_mutex, NULL);
   }
 
+  pthread_mutex_lock(&msg_mutex);
   if (msgq->tail == NULL) {
     msgq->head = node;
     msgq->tail = node;
@@ -185,6 +190,7 @@ void add_msg(const char *file, int lineno, bool verbose, const char *format, ...
     msgq->tail->next = node;
     msgq->tail       = node;
   }
+  pthread_mutex_unlock(&msg_mutex);
 }
 
 static char *pop_msg() {
@@ -217,6 +223,7 @@ void clear_msg() {
 void destroy_msg() {
   clear_msg();
   free(msgq);
+  pthread_mutex_destroy(&msg_mutex);
 }
 
 void show_msg() {
