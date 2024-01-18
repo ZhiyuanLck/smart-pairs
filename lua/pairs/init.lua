@@ -283,7 +283,7 @@ function Pairs:setup(opts)
   u.merge(self.indent, opts.indent)
   u.merge(self.mapping, opts.mapping)
   u.merge(self.autojump_strategy, opts.autojump_strategy)
-  u.merge(self.max_search_lines, opts.max_search_lines)
+  self.max_search_lines = opts.max_search_lines or 500
 
   for ft, pairs in pairs(opts.pairs or {}) do
     self.pairs[ft] = pairs
