@@ -11,6 +11,7 @@ local function type_aux()
       right_line:match('^' .. u.escape(pair.right)) then
       u.insert(-1, -1, '  ')
       u.advance_cursor(' ')
+      u.append_arrow_to_redobuffer(u.K_LEFT)
       return
     end
   end

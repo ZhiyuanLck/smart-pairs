@@ -5,7 +5,7 @@
 First, we have two cases:
 
 - `empty_line`: the cursor is at an empty line
-- `empty_pre`: there is only blanks before the cursor
+- `empty_pre`: there are only blanks before the cursor
 
 In each case, option `enable_cond`, `enable_fallback`, `before_hook` and `after_hook` are support.
 

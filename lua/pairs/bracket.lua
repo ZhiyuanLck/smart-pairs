@@ -22,6 +22,7 @@ local function type_left_neq(left, right)
 
   u.insert(-1, -1, insert_text)
   u.advance_cursor(left)
+  u.append_arrow_to_redobuffer(u.K_LEFT)
 end
 
 --- action when typeset the right bracket
@@ -57,6 +58,7 @@ local function type_right_neq(left, right)
     local m = right_line:match('^' .. _right)
     if m then
       u.advance_cursor(m)
+      u.append_arrow_to_redobuffer(u.K_RIGHT)
     else
       do_nothing()
     end
@@ -75,8 +77,14 @@ local function type_right_neq(left, right)
         local m = line:match('^.-' .. _right)
         if cur == line_idx then
           u.advance_cursor(m)
+          u.append_arrow_to_redobuffer(u.K_RIGHT)
         else
           u.set_cursor(cur + 1, m)
+          -- mock down key
+          -- NOTE: column will not recover when redo
+          for _ = line_idx, cur - 1 do
+            u.append_arrow_to_redobuffer(u.K_DOWN)
+          end
         end
         return
       else
@@ -109,6 +117,10 @@ local function type_eq(bracket)
     local valid = n == 2 and not right_line:match('^' .. pattern)
     if valid then
       u.insert(-1, -1, string.rep(bracket, 4))
+      -- mock left key when recover
+      for _ = 1, 3 do
+        u.append_arrow_to_redobuffer(u.K_LEFT)
+      end
       u.advance_cursor(bracket)
       return
     end
@@ -125,6 +137,8 @@ local function type_eq(bracket)
   -- typeset two brackets
   local typeset = function()
     u.insert(-1, -1, bracket .. bracket)
+    -- mock left key when recover
+    u.append_arrow_to_redobuffer(u.K_LEFT)
     u.advance_cursor(bracket)
   end
 
@@ -145,6 +159,7 @@ local function type_eq(bracket)
     -- jump only if the right bracket is next to the cursor
     if right_line:match('^' .. u.escape(bracket)) then
       u.advance_cursor(bracket)
+      u.append_arrow_to_redobuffer(u.K_RIGHT)
     else -- typeset two brackets
       typeset()
     end

@@ -202,7 +202,7 @@ function Del:del_blank()
   end
 end
 
-local function del_current_line()
+local del_current_line = function()
   local left_line, right_line = u.get_cursor_lr()
 
   --- number of chars to be delete on the lef and right
@@ -263,6 +263,12 @@ local function del_current_line()
   api.nvim_buf_set_text(0, idx, fn.strlen(left_line), idx, fn.col('$') - fn.strlen(right_line) - 1, {''})
   u.set_cursor(0, left_line)
   u.remove_trailing_spaces()
+  for _ = 1, del_r do
+    u.append_arrow_to_redobuffer(u.K_RIGHT)
+  end
+  for _ = 1, del_l + del_r do
+    u.append_char_to_redobuffer(u.K_BS)
+  end
 end
 
 function Del.type()

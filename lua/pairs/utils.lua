@@ -3,6 +3,43 @@ local fmt = string.format
 local rep = string.rep
 local api = vim.api
 local fn = vim.fn
+local ffi = require 'ffi'
+local bit = require 'bit'
+ffi.cdef [[
+  void AppendToRedobuff(const char *str);
+  void AppendCharToRedobuff(int c);
+]]
+
+local TERMCAP2KEY = function(a, b)
+  return - (string.byte(a) + bit.lshift(string.byte(b), 8))
+end
+
+M.Ctrl_G = 7
+M.K_LEFT = TERMCAP2KEY('k', 'l')
+M.K_RIGHT = TERMCAP2KEY('k', 'r')
+M.K_UP = TERMCAP2KEY('k', 'u')
+M.K_DOWN = TERMCAP2KEY('k', 'd')
+M.K_BS = TERMCAP2KEY('k', 'b')
+
+--- append string to redobuffer
+---@param s string
+M.append_to_redobuffer = function(s)
+  ffi.C.AppendToRedobuff(ffi.cast("const char*", s))
+end
+
+--- append char to redobuffer
+---@param ch number
+M.append_char_to_redobuffer = function(ch)
+  ffi.C.AppendCharToRedobuff(ffi.cast("int", ch))
+end
+
+--- append arrow to redobuffer
+---@param ch number
+M.append_arrow_to_redobuffer = function(ch)
+  M.append_char_to_redobuffer(M.Ctrl_G)
+  M.append_char_to_redobuffer(string.byte('U'))
+  M.append_char_to_redobuffer(ch)
+end
 
 --- delete lines of [idx1, idx2), idx1 and idx2 is 0-based index
 ---@param idx1 number
@@ -68,6 +105,7 @@ end
 function M.insert(row, col, text)
   row = get_row(row)
   col = get_col(col)
+  M.append_to_redobuffer(text)
   api.nvim_buf_set_text(0, row, col, row, col, get_text(text))
 end
 

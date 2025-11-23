@@ -270,6 +270,20 @@ press <bs>, _ denotes <space>
 '''
 ```
 
+## Dot Repeat Support
+
+- type left
+    - type left: ✅
+    - type left and right: ✅
+- type right
+    - type right: ✅
+    - jump right: ✅，NOTE: column pos may not recover after undo
+- type equal
+    - complete left one: ✅
+    - type two: ✅
+    - complete right four: ✅
+- type space: ✅
+
 ## Interfaces for Advanced Users
 
 `require('pairs.space').type()`: smart space action

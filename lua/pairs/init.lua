@@ -54,7 +54,7 @@ local config = {
   },
   indent = {
     ['*'] = 1,
-    python = 2,
+    -- python = 2,
   },
   delete = {
     enable_mapping  = true,
@@ -191,7 +191,7 @@ local config = {
     jump_left_out_any  = '<m-{>',
     jump_right_in_any  = '<m-}>',
   },
-  max_search_lines = 500,
+  max_search_lines = 99999999,
 }
 
 local Pairs = {}
